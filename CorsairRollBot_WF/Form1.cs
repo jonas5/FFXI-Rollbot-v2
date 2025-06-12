@@ -395,23 +395,36 @@ namespace CorsairRollBot_WF
 
             if (File.Exists("eliteapi.dll") && File.Exists("elitemmo.api.dll"))
             {
-                Process[] pol = Process.GetProcessesByName("pol");
+                List<string> processNames = new List<string> { "pol", "edenxi", "xiloader" };
+                List<Process> foundProcesses = new List<Process>();
 
-                if (pol.Length < 1)
+                foreach (string name in processNames)
                 {
-                    MetroMessageBox.Show(this, "No POL instances were able to be located." + "\n\n" +
-                        "Please note: If you use a private server make sure the program used to access it has been renamed to POL " +
-                        "otherwise this bot will not be able to locate it.", "Notice:", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    Process[] processes = Process.GetProcessesByName(name);
+                    if (processes.Length > 0)
+                    {
+                        foundProcesses.AddRange(processes);
+                    }
+                }
+
+                if (foundProcesses.Count < 1)
+                {
+                    MetroMessageBox.Show(this, "No game instances (pol.exe, edenxi.exe, xiloader.exe) were located." + "\n\n" +
+                        "Please ensure the game is running. If you use a private server, make sure the executable is named appropriately.", "Notice:", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
                 else
                 {
-                    for (int i = 0; i < pol.Length; i++)
+                    foreach (Process process in foundProcesses)
                     {
-                        POLID.Items.Add(pol[i].MainWindowTitle);
-                        processids.Items.Add(pol[i].Id);
+                        POLID.Items.Add(process.MainWindowTitle);
+                        processids.Items.Add(process.Id);
                     }
-                    POLID.SelectedIndex = 0;
-                    processids.SelectedIndex = 0;
+
+                    if (POLID.Items.Count > 0)
+                    {
+                        POLID.SelectedIndex = 0;
+                        processids.SelectedIndex = 0;
+                    }
                 }
             }
             else
