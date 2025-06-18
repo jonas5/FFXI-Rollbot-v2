@@ -54,16 +54,16 @@ namespace BardSongTracker
         {
             songList = new List<SongData>
             {
-                new SongData(name: "Valor Minuet") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Blade Madrigal") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Army's Paeon") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Knight's Minne") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Hunter's Prelude") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Victory March") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Advancing March") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Sword Madrigal") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Foe Requiem") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData(name: "Mage's Ballad") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 }
+                new SongData(songName: "Valor Minuet") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Blade Madrigal") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Army's Paeon") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Knight's Minne") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Hunter's Prelude") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Victory March") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Advancing March") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Sword Madrigal") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Foe Requiem") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(songName: "Mage's Ballad") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 }
                 // Add more songs as needed
             };
         }
@@ -511,7 +511,7 @@ namespace BardSongTracker
             SongData testSong = new SongData { Name = originalSong.Name, MinDuration = 1, MaxDuration = 1 };
             // To make ApplySongToMember pick this up, we'd need to modify songList or how it's retrieved.
             // Easiest for now: add a temporary song.
-            var tempSongForTest = new SongData(name: "QuickCastAndBuffSong") { MinDuration = 1, MaxDuration = 1, CastingTimeMinSeconds = 1, CastingTimeMaxSeconds = 1 };
+            var tempSongForTest = new SongData(songName: "QuickCastAndBuffSong") { MinDuration = 1, MaxDuration = 1, CastingTimeMinSeconds = 1, CastingTimeMaxSeconds = 1 };
             songList.Add(tempSongForTest);
             PopulateSongComboBoxes();
             song1AComboBox.SelectedItem = tempSongForTest.Name;

@@ -8,4 +8,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="EliteAPI">
+      <HintPath>libs\EliteAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="EliteMMO.API">
+      <HintPath>libs\EliteMMO.API.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
