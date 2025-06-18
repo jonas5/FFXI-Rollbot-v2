@@ -192,31 +192,96 @@ namespace BardSongTracker
             this.addPartyMemberButton.Text = "Add to Lists";
             this.addPartyMemberButton.UseVisualStyleBackColor = true;
 
-            // Configure General Controls
-            this.startStopButton.Location = new System.Drawing.Point(350, 300); // Adjusted Y
+            // Configure Game Integration Controls
+            // Process Label
+            this.processLabel = new System.Windows.Forms.Label();
+            this.processLabel.AutoSize = true;
+            this.processLabel.Location = new System.Drawing.Point(12, 300); // Y below add member
+            this.processLabel.Name = "processLabel";
+            this.processLabel.Size = new System.Drawing.Size(84, 15); // Adjusted size for "Game Process:"
+            this.processLabel.TabIndex = 8;
+            this.processLabel.Text = "Game Process:";
+            this.Controls.Add(this.processLabel);
+
+            // Process ComboBox
+            this.processComboBox = new System.Windows.Forms.ComboBox();
+            this.processComboBox.FormattingEnabled = true;
+            this.processComboBox.Location = new System.Drawing.Point(100, 297); // Adjusted X to align with label
+            this.processComboBox.Name = "processComboBox";
+            this.processComboBox.Size = new System.Drawing.Size(212, 23); // Adjusted width
+            this.processComboBox.TabIndex = 9;
+            this.Controls.Add(this.processComboBox);
+
+            // Select Process Button
+            this.selectProcessButton = new System.Windows.Forms.Button();
+            this.selectProcessButton.Location = new System.Drawing.Point(318, 296);
+            this.selectProcessButton.Name = "selectProcessButton";
+            this.selectProcessButton.Size = new System.Drawing.Size(75, 25);
+            this.selectProcessButton.TabIndex = 10;
+            this.selectProcessButton.Text = "Connect";
+            this.selectProcessButton.UseVisualStyleBackColor = true;
+            this.Controls.Add(this.selectProcessButton);
+
+            // Refresh Party Button
+            this.refreshPartyButton = new System.Windows.Forms.Button();
+            this.refreshPartyButton.Location = new System.Drawing.Point(399, 296);
+            this.refreshPartyButton.Name = "refreshPartyButton";
+            this.refreshPartyButton.Size = new System.Drawing.Size(100, 25);
+            this.refreshPartyButton.TabIndex = 11;
+            this.refreshPartyButton.Text = "Refresh Party";
+            this.refreshPartyButton.UseVisualStyleBackColor = true;
+            this.refreshPartyButton.Enabled = false; // Initial state
+            this.Controls.Add(this.refreshPartyButton);
+
+            // Follow Label
+            this.followLabel = new System.Windows.Forms.Label();
+            this.followLabel.AutoSize = true;
+            this.followLabel.Location = new System.Drawing.Point(12, 330);
+            this.followLabel.Name = "followLabel";
+            this.followLabel.Size = new System.Drawing.Size(83, 15); // Adjusted size for "Follow Target:"
+            this.followLabel.TabIndex = 12;
+            this.followLabel.Text = "Follow Target:";
+            this.Controls.Add(this.followLabel);
+
+            // Follow Target TextBox
+            this.followTargetTextBox = new System.Windows.Forms.TextBox();
+            this.followTargetTextBox.Location = new System.Drawing.Point(100, 327); // Adjusted X
+            this.followTargetTextBox.Name = "followTargetTextBox";
+            this.followTargetTextBox.Size = new System.Drawing.Size(212, 23); // Adjusted width
+            this.followTargetTextBox.TabIndex = 13;
+            this.followTargetTextBox.Enabled = false; // Initial state
+            this.Controls.Add(this.followTargetTextBox);
+
+            // Set Follow Target Button
+            this.setFollowTargetButton = new System.Windows.Forms.Button();
+            this.setFollowTargetButton.Location = new System.Drawing.Point(318, 326);
+            this.setFollowTargetButton.Name = "setFollowTargetButton";
+            this.setFollowTargetButton.Size = new System.Drawing.Size(75, 25);
+            this.setFollowTargetButton.TabIndex = 14;
+            this.setFollowTargetButton.Text = "Follow";
+            this.setFollowTargetButton.UseVisualStyleBackColor = true;
+            this.setFollowTargetButton.Enabled = false; // Initial state
+            this.Controls.Add(this.setFollowTargetButton);
+
+            // Configure General Controls (adjust Y and TabIndex for Start/Stop and Run Tests)
+            this.startStopButton.Location = new System.Drawing.Point(12, 360); // New Y, moved to left
             this.startStopButton.Name = "startStopButton";
             this.startStopButton.Size = new System.Drawing.Size(100, 30);
-            this.startStopButton.TabIndex = 6; // Adjusted TabIndex
+            this.startStopButton.TabIndex = 15;
             this.startStopButton.Text = "Start/Stop All";
             this.startStopButton.UseVisualStyleBackColor = true;
 
-            // Add Controls to Form
-            this.Controls.Add(this.group1ControlsContainer);
-            this.Controls.Add(this.group2ControlsContainer);
-            this.Controls.Add(this.startStopButton);
-            this.Controls.Add(this.addPartyMemberLabel);
-            this.Controls.Add(this.partyMemberNameTextBox);
-            this.Controls.Add(this.addPartyMemberButton);
-
             // Configure Run Tests Button
-            this.runTestsButton = new System.Windows.Forms.Button();
-            this.runTestsButton.Location = new System.Drawing.Point(460, 300); // Positioned next to Start/Stop
+            this.runTestsButton.Location = new System.Drawing.Point(118, 360); // New Y, next to start/stop
             this.runTestsButton.Name = "runTestsButton";
-            this.runTestsButton.Size = new System.Drawing.Size(100, 30); // Same size as Start/Stop
-            this.runTestsButton.TabIndex = 7; // Next available TabIndex
+            this.runTestsButton.Size = new System.Drawing.Size(100, 30);
+            this.runTestsButton.TabIndex = 16;
             this.runTestsButton.Text = "Run Basic Tests";
             this.runTestsButton.UseVisualStyleBackColor = true;
-            this.Controls.Add(this.runTestsButton);
+            // this.Controls.Add(this.runTestsButton); // Already added
+
+            // Adjust Form ClientSize if needed
+            this.ClientSize = new System.Drawing.Size(800, 400); // Adjusted height
 
             // ResumeLayout
             this.group1ControlsContainer.ResumeLayout(false);
@@ -235,6 +300,15 @@ namespace BardSongTracker
         private System.Windows.Forms.TextBox partyMemberNameTextBox;
         private System.Windows.Forms.Button addPartyMemberButton;
         private System.Windows.Forms.Button runTestsButton;
+
+        // Game Integration Controls
+        private System.Windows.Forms.Label processLabel;
+        private System.Windows.Forms.ComboBox processComboBox;
+        private System.Windows.Forms.Button selectProcessButton;
+        private System.Windows.Forms.Button refreshPartyButton;
+        private System.Windows.Forms.Label followLabel;
+        private System.Windows.Forms.TextBox followTargetTextBox;
+        private System.Windows.Forms.Button setFollowTargetButton;
 
         private System.Windows.Forms.GroupBox group1ControlsContainer;
         private System.Windows.Forms.Label group1Label;

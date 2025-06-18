@@ -2,15 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using EliteMMO.API;
+using System.Diagnostics;
 
 namespace BardSongTracker
 {
     public partial class Form1 : Form
     {
-        private List<SongData> songList;
+        private List<SongData> songList = new List<SongData>();
         private List<ActiveSongInfo> activeSongs = new List<ActiveSongInfo>();
         private bool isRunning = false;
         private Random random = new Random();
+        private EliteAPI? _api; // Field for EliteAPI
 
         public Form1()
         {
@@ -19,47 +22,73 @@ namespace BardSongTracker
             PopulateSongComboBoxes();
             InitializeTimerLabels();
             AssignEventHandlers();
+            PopulateProcessList(); // Call new method
+        }
+
+        private void PopulateProcessList()
+        {
+            processComboBox!.Items.Clear(); // Use null-forgiving operator
+            string[] processNames = { "pol", "edenxi", "xiloader" }; // Add other common names if needed
+            foreach (string name in processNames)
+            {
+                Process[] processes = Process.GetProcessesByName(name);
+                foreach (Process process in processes)
+                {
+                    // Store both name and ID, perhaps in a custom object or formatted string
+                    // For simplicity now, just add a descriptive string and retrieve ID later by parsing or matching
+                    processComboBox!.Items.Add($"{process.MainWindowTitle} (ID: {process.Id}) - {name}");
+                }
+            }
+            if (processComboBox!.Items.Count > 0)
+            {
+                processComboBox!.SelectedIndex = 0;
+            }
+            else
+            {
+                processComboBox!.Items.Add("No game processes found");
+                processComboBox!.SelectedIndex = 0;
+            }
         }
 
         private void InitializeSongList()
         {
             songList = new List<SongData>
             {
-                new SongData { Name = "Valor Minuet", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Blade Madrigal", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Army's Paeon", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Knight's Minne", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Hunter's Prelude", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Victory March", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Advancing March", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Sword Madrigal", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Foe Requiem", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
-                new SongData { Name = "Mage's Ballad", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 }
+                new SongData(name: "Valor Minuet") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Blade Madrigal") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Army's Paeon") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Knight's Minne") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Hunter's Prelude") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Victory March") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Advancing March") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Sword Madrigal") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Foe Requiem") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData(name: "Mage's Ballad") { MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 }
                 // Add more songs as needed
             };
         }
 
         private void PopulateSongComboBoxes()
         {
-            song1AComboBox.Items.Clear();
-            song1BComboBox.Items.Clear();
-            song2AComboBox.Items.Clear();
-            song2BComboBox.Items.Clear();
+            song1AComboBox!.Items.Clear(); // Assuming not null after InitializeComponent
+            song1BComboBox!.Items.Clear();
+            song2AComboBox!.Items.Clear();
+            song2BComboBox!.Items.Clear();
 
             foreach (var song in songList)
             {
-                song1AComboBox.Items.Add(song.Name);
-                song1BComboBox.Items.Add(song.Name);
-                song2AComboBox.Items.Add(song.Name);
-                song2BComboBox.Items.Add(song.Name);
+                song1AComboBox!.Items.Add(song.Name); // song.Name is non-null
+                song1BComboBox!.Items.Add(song.Name);
+                song2AComboBox!.Items.Add(song.Name);
+                song2BComboBox!.Items.Add(song.Name);
             }
 
             if (songList.Count > 0)
             {
-                song1AComboBox.SelectedIndex = 0;
-                song1BComboBox.SelectedIndex = Math.Min(1, songList.Count - 1); // Ensure valid index
-                song2AComboBox.SelectedIndex = 0;
-                song2BComboBox.SelectedIndex = Math.Min(1, songList.Count - 1); // Ensure valid index
+                song1AComboBox!.SelectedIndex = 0;
+                song1BComboBox!.SelectedIndex = Math.Min(1, songList.Count - 1); // Ensure valid index
+                song2AComboBox!.SelectedIndex = 0;
+                song2BComboBox!.SelectedIndex = Math.Min(1, songList.Count - 1); // Ensure valid index
             }
         }
 
@@ -82,6 +111,177 @@ namespace BardSongTracker
             this.partyGroup2ListBox.SelectedIndexChanged += new System.EventHandler(this.PartyListBox_SelectedIndexChanged);
             this.addPartyMemberButton.Click += new System.EventHandler(this.addPartyMemberButton_Click);
             this.runTestsButton.Click += new System.EventHandler(this.runTestsButton_Click);
+            this.selectProcessButton!.Click += new System.EventHandler(this.selectProcessButton_Click);
+            this.refreshPartyButton!.Click += new System.EventHandler(this.refreshPartyButton_Click);
+            this.setFollowTargetButton!.Click += new System.EventHandler(this.setFollowTargetButton_Click); // Add this
+        }
+
+        private void setFollowTargetButton_Click(object? sender, EventArgs e)
+        {
+            if (_api == null || _api.Player == null)
+            {
+                MessageBox.Show("API not connected. Please select a game process first.", "API Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string? targetName = followTargetTextBox!.Text?.Trim(); // Use null-forgiving for TextBox, then null-conditional for Text
+
+            if (string.IsNullOrEmpty(targetName))
+            {
+                MessageBox.Show("Please enter a target name to follow.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                _api.ThirdParty.SendString($"/follow \"{targetName}\""); // Ensure quotes if target name can have spaces
+                MessageBox.Show($"Sent /follow command for {targetName}.", "Follow", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error setting follow target: " + ex.Message, "API Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void refreshPartyButton_Click(object? sender, EventArgs e)
+        {
+            if (_api == null || _api.Player == null) // Basic check, more robust API status check might be needed
+            {
+                MessageBox.Show("API not connected. Please select a game process first.", "API Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            RefreshPartyListFromApi();
+        }
+
+        private void selectProcessButton_Click(object? sender, EventArgs e)
+        {
+            if (processComboBox!.SelectedItem == null || processComboBox!.Items.Count == 0 || processComboBox!.SelectedItem.ToString() == "No game processes found")
+            {
+                MessageBox.Show("No process selected or available.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string selectedProcessString = processComboBox!.SelectedItem.ToString()!;
+            try
+            {
+                // Extract Process ID. This is a bit naive; a more robust way would be to store Process objects or IDs directly in ComboBox items.
+                // Example parsing: "Some Title (ID: 12345) - pol"
+                int idStartIndex = selectedProcessString.IndexOf("(ID: ") + 5;
+                int idEndIndex = selectedProcessString.IndexOf(")", idStartIndex);
+                if (idStartIndex == -1 + 5 || idEndIndex == -1) throw new FormatException("Could not parse Process ID from selection.");
+
+                int processId = int.Parse(selectedProcessString.Substring(idStartIndex, idEndIndex - idStartIndex));
+
+                _api = new EliteAPI(processId); // Initialize the API
+
+                // Check if API connected (basic check)
+                if (_api != null && _api.Player != null && _api.Player.Name != null && !string.IsNullOrEmpty(_api.Player.Name)) // More robust check might be needed
+                {
+                    MessageBox.Show($"Connected to process ID {processId}. Player: {_api.Player.Name}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    selectProcessButton!.Text = "Connected";
+                    selectProcessButton!.Enabled = false; // Disable after connection
+                    processComboBox!.Enabled = false;
+                    refreshPartyButton!.Enabled = true;
+                    followTargetTextBox!.Enabled = true;
+                    setFollowTargetButton!.Enabled = true;
+                    RefreshPartyListFromApi();
+                }
+                else
+                {
+                     _api = null; // Ensure _api is null if connection "failed"
+                    MessageBox.Show($"Failed to properly connect to process ID {processId}. Ensure it's a valid FFXI process.", "Connection Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    refreshPartyButton!.Enabled = false;
+                    followTargetTextBox!.Enabled = false;
+                    setFollowTargetButton!.Enabled = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _api = null; // Ensure _api is null on error
+                MessageBox.Show("Error selecting process or initializing API: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                selectProcessButton!.Text = "Connect"; // Reset button
+                selectProcessButton!.Enabled = true;
+                processComboBox!.Enabled = true;
+                refreshPartyButton!.Enabled = false;
+                followTargetTextBox!.Enabled = false;
+                setFollowTargetButton!.Enabled = false;
+            }
+        }
+
+        private void RefreshPartyListFromApi()
+        {
+            if (_api == null || _api.Player == null) // Redundant check if called from button, but good for direct calls
+            {
+                // Silently return or log if called internally without API ready
+                return;
+            }
+
+            try
+            {
+                var partyMembers = _api.Party.GetPartyMembers(); // Assuming this returns a list-like collection of party members
+
+                // Store current selections to attempt to restore them
+                var selectedG1 = partyGroup1ListBox!.SelectedItems.Cast<string>().ToList();
+                var selectedG2 = partyGroup2ListBox!.SelectedItems.Cast<string>().ToList();
+
+                partyGroup1ListBox!.Items.Clear();
+                partyGroup2ListBox!.Items.Clear();
+
+                if (partyMembers != null) // EliteAPI might return null if not in party or error
+                {
+                    foreach (var member in partyMembers) // Adjust property names based on actual EliteAPI.PartyMember structure
+                    {
+                        // Assuming 'member' has a 'Name' property and we don't want to list ourselves.
+                        // Also, ensure member is valid (e.g., some APIs might have an 'Active' or 'InZone' flag)
+                        // For now, a simple Name check:
+                        if (member != null && !string.IsNullOrEmpty(member.Name) && member.Name != _api.Player.Name)
+                        {
+                            partyGroup1ListBox!.Items.Add(member.Name);
+                            partyGroup2ListBox!.Items.Add(member.Name);
+                        }
+                    }
+                }
+
+                // Attempt to restore selections
+                foreach (string name in selectedG1)
+                {
+                    if (partyGroup1ListBox!.Items.Contains(name))
+                    {
+                        partyGroup1ListBox!.SelectedItems.Add(name);
+                    }
+                }
+                foreach (string name in selectedG2)
+                {
+                    if (partyGroup2ListBox!.Items.Contains(name))
+                    {
+                        partyGroup2ListBox!.SelectedItems.Add(name);
+                    }
+                }
+
+                if (partyGroup1ListBox!.Items.Count == 0)
+                {
+                    partyGroup1ListBox!.Items.Add("No party members found (or not in party).");
+                }
+                 if (partyGroup2ListBox!.Items.Count == 0)
+                {
+                    partyGroup2ListBox!.Items.Add("No party members found (or not in party).");
+                }
+
+                // If party members were updated while isRunning, re-evaluate songs
+                if (isRunning)
+                {
+                    ApplySongsToSelectedMembers();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error refreshing party list: " + ex.Message, "API Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Optionally clear lists or add error messages
+                partyGroup1ListBox!.Items.Clear();
+                partyGroup1ListBox!.Items.Add("Error loading party.");
+                partyGroup2ListBox!.Items.Clear();
+                partyGroup2ListBox!.Items.Add("Error loading party.");
+            }
         }
 
         private void ResetTestEnvironment()
@@ -311,7 +511,7 @@ namespace BardSongTracker
             SongData testSong = new SongData { Name = originalSong.Name, MinDuration = 1, MaxDuration = 1 };
             // To make ApplySongToMember pick this up, we'd need to modify songList or how it's retrieved.
             // Easiest for now: add a temporary song.
-            var tempSongForTest = new SongData { Name = "QuickCastAndBuffSong", MinDuration = 1, MaxDuration = 1, CastingTimeMinSeconds = 1, CastingTimeMaxSeconds = 1 };
+            var tempSongForTest = new SongData(name: "QuickCastAndBuffSong") { MinDuration = 1, MaxDuration = 1, CastingTimeMinSeconds = 1, CastingTimeMaxSeconds = 1 };
             songList.Add(tempSongForTest);
             PopulateSongComboBoxes();
             song1AComboBox.SelectedItem = tempSongForTest.Name;
@@ -356,7 +556,7 @@ namespace BardSongTracker
         }
 
 
-        private void runTestsButton_Click(object sender, EventArgs e)
+        private void runTestsButton_Click(object? sender, EventArgs e)
         {
             if (isRunning)
             {
@@ -388,7 +588,7 @@ namespace BardSongTracker
             MessageBox.Show(results.ToString(), "Test Results");
         }
 
-        private void addPartyMemberButton_Click(object sender, EventArgs e)
+        private void addPartyMemberButton_Click(object? sender, EventArgs e)
         {
             string newMemberName = partyMemberNameTextBox.Text.Trim();
             if (!string.IsNullOrEmpty(newMemberName))
@@ -409,7 +609,7 @@ namespace BardSongTracker
             }
         }
 
-        private void startStopButton_Click(object sender, EventArgs e)
+        private void startStopButton_Click(object? sender, EventArgs e)
         {
             isRunning = !isRunning;
             if (isRunning)
@@ -440,7 +640,7 @@ namespace BardSongTracker
             }
         }
 
-        private void SongComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void SongComboBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (isRunning)
             {
@@ -448,7 +648,7 @@ namespace BardSongTracker
             }
         }
 
-        private void PartyListBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void PartyListBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (isRunning)
             {
@@ -471,17 +671,22 @@ namespace BardSongTracker
             ProcessGroupSongs(partyGroup2ListBox, song2BComboBox, timer2BLabel, 2, 1);
         }
 
-        private void ProcessGroupSongs(ListBox partyListBox, ComboBox songComboBox, Label timerLabel, int groupNum, int slotNum)
+        private void ProcessGroupSongs(ListBox partyListBox, ComboBox songComboBox, System.Windows.Forms.Label? timerLabel, int groupNum, int slotNum)
         {
-            if (songComboBox.SelectedItem == null) return;
-            SongData selectedSong = songList.FirstOrDefault(s => s.Name == songComboBox.SelectedItem.ToString());
+            string? selectedSongName = songComboBox.SelectedItem as string;
+            if (selectedSongName == null) return;
+
+            SongData? selectedSong = songList.FirstOrDefault(s => s.Name == selectedSongName);
             if (selectedSong == null) return;
 
             // Apply to newly selected members in the list for this specific song slot
-            foreach (var item in partyListBox.SelectedItems)
+            foreach (var item in partyListBox.SelectedItems) // Assuming partyListBox and SelectedItems are not null
             {
-                string memberName = item.ToString();
-                ApplySongToMember(memberName, selectedSong, timerLabel, groupNum, slotNum);
+                string? memberName = item as string; // item could be non-string
+                if (memberName != null)
+                {
+                    ApplySongToMember(memberName, selectedSong, timerLabel, groupNum, slotNum);
+                }
             }
 
             // Remove from members who are no longer selected for this song slot for this group
@@ -508,7 +713,7 @@ namespace BardSongTracker
         }
 
 
-        private void ApplySongToMember(string memberName, SongData songToApply, Label displayLabel, int groupNum, int slotNum)
+        private void ApplySongToMember(string memberName, SongData songToApply, System.Windows.Forms.Label? displayLabel, int groupNum, int slotNum)
         {
             if (!isRunning) return;
 
@@ -560,34 +765,29 @@ namespace BardSongTracker
             }
 
             // Add the new song, starting with casting phase
-            var newActiveSong = new ActiveSongInfo
+            var newActiveSong = new ActiveSongInfo(memberName, songToApply, displayLabel, groupNum, slotNum)
             {
-                PartyMemberName = memberName,
-                AppliedSong = songToApply,
-                AssociatedLabel = displayLabel,
-                GroupNumber = groupNum,
-                SongSlotInGroup = slotNum,
-                AppliedTimestamp = DateTime.UtcNow,
-                IsCasting = true
+                IsCasting = true // Set after construction, as it's part of the application logic
             };
+            // AppliedTimestamp is set in the constructor.
 
             newActiveSong.RemainingCastingSeconds = random.Next(songToApply.CastingTimeMinSeconds, songToApply.CastingTimeMaxSeconds + 1);
-            newActiveSong.CastingTimer = new Timer();
+            newActiveSong.CastingTimer = new System.Windows.Forms.Timer();
             newActiveSong.CastingTimer.Interval = 1000;
             newActiveSong.CastingTimer.Tick += CastingTimer_Tick;
             newActiveSong.CastingTimer.Tag = newActiveSong;
 
             activeSongs.Add(newActiveSong);
-            newActiveSong.CastingTimer.Start();
+            newActiveSong.CastingTimer?.Start();
             UpdateTimerLabel(newActiveSong);
         }
 
-        private void CastingTimer_Tick(object sender, EventArgs e)
+        private void CastingTimer_Tick(object? sender, EventArgs e)
         {
-            Timer timer = sender as Timer;
+            System.Windows.Forms.Timer? timer = sender as System.Windows.Forms.Timer;
             if (timer == null) return;
 
-            ActiveSongInfo activeSong = timer.Tag as ActiveSongInfo;
+            ActiveSongInfo? activeSong = timer.Tag as ActiveSongInfo; // Make activeSong nullable
             if (activeSong == null || !activeSong.IsCasting)
             {
                 // Safety check, should not happen if timer is managed correctly
@@ -608,21 +808,21 @@ namespace BardSongTracker
 
                 // Start main buff timer
                 activeSong.RemainingSeconds = random.Next(activeSong.AppliedSong.MinDuration, activeSong.AppliedSong.MaxDuration + 1);
-                activeSong.SongTimer = new Timer();
+                activeSong.SongTimer = new System.Windows.Forms.Timer();
                 activeSong.SongTimer.Interval = 1000;
                 activeSong.SongTimer.Tick += SongTimer_Tick;
                 activeSong.SongTimer.Tag = activeSong;
-                activeSong.SongTimer.Start();
+                activeSong.SongTimer?.Start();
                 UpdateTimerLabel(activeSong); // Update label to show buff started
             }
         }
 
-        private void SongTimer_Tick(object sender, EventArgs e)
+        private void SongTimer_Tick(object? sender, EventArgs e)
         {
-            Timer timer = sender as Timer;
+            System.Windows.Forms.Timer? timer = sender as System.Windows.Forms.Timer;
             if (timer == null) return;
 
-            ActiveSongInfo activeSong = timer.Tag as ActiveSongInfo;
+            ActiveSongInfo? activeSong = timer.Tag as ActiveSongInfo; // Make activeSong nullable
             // Ensure this tick is for a buffing song, not a casting one that hasn't been switched properly.
             if (activeSong == null || activeSong.IsCasting)
             {
@@ -687,7 +887,7 @@ namespace BardSongTracker
                 songToRemove.SongTimer = null;
             }
 
-            if (clearLabel && songToRemove.AssociatedLabel != null)
+            if (clearLabel && songToRemove.AssociatedLabel != null) // This check is already good
             {
                 // Only clear if this was the song defining the label, or if no other song for that member/slot.
                 // This is complex with shared labels. If another song is active for this member in this slot,
@@ -717,8 +917,9 @@ namespace BardSongTracker
 
         private void RefreshSpecificTimerLabel(int groupNum, int slotNum)
         {
-            Label labelToUpdate = null;
-            ListBox relevantListBox = null;
+            System.Windows.Forms.Label? labelToUpdate = null;
+            ListBox? relevantListBox = null;
+
             if (groupNum == 1 && slotNum == 0) { labelToUpdate = timer1ALabel; relevantListBox = partyGroup1ListBox; }
             else if (groupNum == 1 && slotNum == 1) { labelToUpdate = timer1BLabel; relevantListBox = partyGroup1ListBox; }
             else if (groupNum == 2 && slotNum == 0) { labelToUpdate = timer2ALabel; relevantListBox = partyGroup2ListBox; }
@@ -726,16 +927,18 @@ namespace BardSongTracker
 
             if (labelToUpdate == null || relevantListBox == null) return;
 
-            // Find an active song for any selected member in this slot
-            ActiveSongInfo songToDisplay = null;
+            ActiveSongInfo? songToDisplay = null;
             foreach(var item in relevantListBox.SelectedItems)
             {
-                string memberName = item.ToString();
-                songToDisplay = activeSongs.FirstOrDefault(s =>
-                    s.PartyMemberName == memberName &&
-                    s.GroupNumber == groupNum &&
-                    s.SongSlotInGroup == slotNum);
-                if (songToDisplay != null) break;
+                string? memberName = item as string;
+                if (memberName != null)
+                {
+                    songToDisplay = activeSongs.FirstOrDefault(s =>
+                        s.PartyMemberName == memberName &&
+                        s.GroupNumber == groupNum &&
+                        s.SongSlotInGroup == slotNum);
+                    if (songToDisplay != null) break;
+                }
             }
 
             if (songToDisplay != null)
