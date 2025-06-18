@@ -7,16 +7,16 @@ namespace BardSongTracker
     {
         public string PartyMemberName { get; set; }
         public SongData AppliedSong { get; set; }
-        public Timer SongTimer { get; set; }
+        public System.Windows.Forms.Timer SongTimer { get; set; }
         public int RemainingSeconds { get; set; }
-        public Label AssociatedLabel { get; set; }
+        public System.Windows.Forms.Label AssociatedLabel { get; set; }
         public int GroupNumber { get; set; } // 1 or 2
         public int SongSlotInGroup { get; set; } // 0 for A, 1 for B
         public DateTime AppliedTimestamp { get; set; }
 
         // New properties for casting phase
         public bool IsCasting { get; set; }
-        public Timer CastingTimer { get; set; }
+        public System.Windows.Forms.Timer CastingTimer { get; set; }
         public int RemainingCastingSeconds { get; set; }
     }
 }
