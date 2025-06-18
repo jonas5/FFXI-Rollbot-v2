@@ -25,16 +25,16 @@ namespace BardSongTracker
         {
             songList = new List<SongData>
             {
-                new SongData { Name = "Valor Minuet", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Blade Madrigal", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Army's Paeon", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Knight's Minne", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Hunter's Prelude", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Victory March", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Advancing March", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Sword Madrigal", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Foe Requiem", MinDuration = 7, MaxDuration = 9 },
-                new SongData { Name = "Mage's Ballad", MinDuration = 7, MaxDuration = 9 }
+                new SongData { Name = "Valor Minuet", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Blade Madrigal", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Army's Paeon", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Knight's Minne", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Hunter's Prelude", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Victory March", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Advancing March", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Sword Madrigal", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Foe Requiem", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 },
+                new SongData { Name = "Mage's Ballad", MinDuration = 180, MaxDuration = 180, CastingTimeMinSeconds = 7, CastingTimeMaxSeconds = 9 }
                 // Add more songs as needed
             };
         }
@@ -140,8 +140,29 @@ namespace BardSongTracker
             ApplySongsToSelectedMembers(); // This uses the UI selections
 
             var applied = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songToTest.Name && s.GroupNumber == 1 && s.SongSlotInGroup == 0);
-            string result = applied != null ? "PASS" : "FAIL";
-            result += $" - Song '{songToTest.Name}' on '{testMember}'. Expected active, Found: {applied != null}. Label: {timer1ALabel.Text}";
+            string result;
+            if (applied != null && applied.IsCasting && applied.CastingTimer != null && applied.CastingTimer.Enabled && applied.SongTimer == null &&
+                applied.RemainingCastingSeconds >= songToTest.CastingTimeMinSeconds && applied.RemainingCastingSeconds <= songToTest.CastingTimeMaxSeconds)
+            {
+                result = "PASS (Initial Cast)";
+            }
+            else
+            {
+                result = "FAIL (Initial Cast)";
+            }
+            result += $" - Song '{songToTest.Name}' on '{testMember}'. Expected casting. IsCasting: {applied?.IsCasting}, CastTimerEnabled: {applied?.CastingTimer?.Enabled}, BuffTimerNull: {applied?.SongTimer == null}. Label: {timer1ALabel.Text}";
+
+            MessageBox.Show($"Test_ApplySingleSong: Observe if '{songToTest.Name}' on '{testMember}' shows 'Cast: ...' then changes to buff countdown. Click OK after observing casting completion (approx 7-9s).", "Manual Observation");
+
+            // Optional: Check state after presumed casting completion
+            // This is tricky because the timing is not exact. For now, we rely on manual observation for transition.
+            if (applied != null && !applied.IsCasting && applied.SongTimer != null && applied.SongTimer.Enabled)
+            {
+                result += "\n - Post-Cast Check: PASS (Buffing)";
+            } else if (applied != null) {
+                result += $"\n - Post-Cast Check: FAIL (Not buffing as expected). IsCasting: {applied.IsCasting}, SongTimerEnabled: {applied.SongTimer?.Enabled}";
+            }
+
 
             ResetTestEnvironment();
             return result;
@@ -166,29 +187,35 @@ namespace BardSongTracker
             song1AComboBox.SelectedItem = songA.Name;
             ApplySongsToSelectedMembers();
             var activeA = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songA.Name);
-            if (activeA == null) { ResetTestEnvironment(); return $"FAIL - Song A ('{songA.Name}') failed to apply."; }
-            activeA.AppliedTimestamp = DateTime.UtcNow.AddSeconds(-30); // Make it older
+            if (activeA == null || !activeA.IsCasting) { ResetTestEnvironment(); return $"FAIL - Song A ('{songA.Name}') failed to apply or start casting."; }
+            MessageBox.Show($"Test_ApplyAndOverwriteSongs: Song A ('{songA.Name}') applied. Observe casting. Click OK.", "Manual Observation");
+            activeA.AppliedTimestamp = DateTime.UtcNow.AddSeconds(-30); // Make it older for overwrite logic
 
             // Apply Song B (Slot 1)
             song1BComboBox.SelectedItem = songB.Name;
             ApplySongsToSelectedMembers();
             var activeB = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songB.Name);
-            if (activeB == null) { ResetTestEnvironment(); return $"FAIL - Song B ('{songB.Name}') failed to apply."; }
-            activeB.AppliedTimestamp = DateTime.UtcNow.AddSeconds(-20); // Make it newer than A, older than C
+            if (activeB == null || !activeB.IsCasting) { ResetTestEnvironment(); return $"FAIL - Song B ('{songB.Name}') failed to apply or start casting."; }
+            MessageBox.Show($"Test_ApplyAndOverwriteSongs: Song B ('{songB.Name}') applied. Observe casting. Click OK.", "Manual Observation");
+            activeB.AppliedTimestamp = DateTime.UtcNow.AddSeconds(-20); // Newer than A, older than C
 
-            // Apply Song C (Slot 0, should overwrite A if logic is by slot + oldest, or just oldest if not slot-specific)
-            // The current ApplySongToMember logic prioritizes replacing the song in the *specific slot*.
-            // If we apply C to slot 0, it should replace A.
+            // Apply Song C (Slot 0, should overwrite A)
             song1AComboBox.SelectedItem = songC.Name;
-            ApplySongsToSelectedMembers(); // Re-apply for slot A with song C
+            ApplySongsToSelectedMembers();
+            var activeC = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songC.Name);
+            if (activeC == null || !activeC.IsCasting) { ResetTestEnvironment(); return $"FAIL - Song C ('{songC.Name}') failed to apply or start casting as overwrite."; }
+            MessageBox.Show($"Test_ApplyAndOverwriteSongs: Song C ('{songC.Name}') applied to Slot 0 (replacing A). Observe casting. Click OK.", "Manual Observation");
 
+            // After all applications and observations
             bool songAFound = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songA.Name);
-            bool songBFound = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songB.Name);
-            bool songCFound = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songC.Name);
+            // activeB should now be the one in slot 1 for the member. It might have finished casting.
+            var finalActiveB = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songB.Name);
+            // activeC should be in slot 0 for the member. It might have finished casting.
+            var finalActiveC = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songC.Name);
 
-            // Expected: C is in Slot 0, B is in Slot 1. A is gone.
             string result;
-            if (songCFound && songBFound && !songAFound && activeSongs.Count(s => s.PartyMemberName == testMember) == 2)
+            // Expected: C is in Slot 0 (now likely buffing), B is in Slot 1 (now likely buffing). A is gone.
+            if (finalActiveC != null && finalActiveB != null && !songAFound && activeSongs.Count(s => s.PartyMemberName == testMember) == 2)
             {
                 result = "PASS";
             }
@@ -196,7 +223,8 @@ namespace BardSongTracker
             {
                 result = "FAIL";
             }
-            result += $" - Applied A, B, then C to same slot as A. Expected C & B. Found A:{songAFound}, B:{songBFound}, C:{songCFound}. Count: {activeSongs.Count(s=>s.PartyMemberName==testMember)}";
+            result += $" - Applied A, B, then C to slot of A. Expected C & B. Found A:{songAFound}, B:{finalActiveB != null}, C:{finalActiveC != null}. Count: {activeSongs.Count(s=>s.PartyMemberName==testMember)}." +
+                      $" Casting C: {finalActiveC?.IsCasting}, Casting B: {finalActiveB?.IsCasting}.";
 
             ResetTestEnvironment();
             return result;
@@ -223,29 +251,35 @@ namespace BardSongTracker
             song1AComboBox.SelectedItem = songG1A.Name;
             ApplySongsToSelectedMembers();
             var activeG1A = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG1A.Name);
-            if (activeG1A == null) { ResetTestEnvironment(); return $"FAIL - Song G1A ('{songG1A.Name}') failed to apply."; }
+            if (activeG1A == null || !activeG1A.IsCasting) { ResetTestEnvironment(); return $"FAIL - Song G1A ('{songG1A.Name}') failed to apply/cast."; }
+            MessageBox.Show($"Test_TwoSongsMaxPerMember: Song G1A ('{songG1A.Name}') applied. Observe casting. Click OK.", "Manual Observation");
             activeG1A.AppliedTimestamp = DateTime.UtcNow.AddSeconds(-30); // Oldest
 
             // Apply Song G1B (Group 1, Slot B)
             song1BComboBox.SelectedItem = songG1B.Name;
             ApplySongsToSelectedMembers();
             var activeG1B = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG1B.Name);
-            if (activeG1B == null) { ResetTestEnvironment(); return $"FAIL - Song G1B ('{songG1B.Name}') failed to apply."; }
+            if (activeG1B == null || !activeG1B.IsCasting) { ResetTestEnvironment(); return $"FAIL - Song G1B ('{songG1B.Name}') failed to apply/cast."; }
+            MessageBox.Show($"Test_TwoSongsMaxPerMember: Song G1B ('{songG1B.Name}') applied. Observe casting. Click OK.", "Manual Observation");
             activeG1B.AppliedTimestamp = DateTime.UtcNow.AddSeconds(-20); // Middle
 
             // Now, select the member in Group 2 and apply Song G2A (Group 2, Slot A)
             // This should force the oldest song (G1A) to be removed.
             partyGroup2ListBox.SelectedItem = testMember;
             song2AComboBox.SelectedItem = songG2A.Name;
-            ApplySongsToSelectedMembers(); // This will trigger application for Group 2 selections
+            ApplySongsToSelectedMembers();
+            var activeG2A = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG2A.Name);
+            if (activeG2A == null || !activeG2A.IsCasting) { ResetTestEnvironment(); return $"FAIL - Song G2A ('{songG2A.Name}') failed to apply/cast as 3rd song."; }
+            MessageBox.Show($"Test_TwoSongsMaxPerMember: Song G2A ('{songG2A.Name}') applied to Group 2 (replacing G1A). Observe casting. Click OK.", "Manual Observation");
 
-            bool g1aFound = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG1A.Name);
-            bool g1bFound = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG1B.Name);
-            bool g2aFound = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG2A.Name);
+            // Check final state
+            bool g1aFoundFinal = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG1A.Name);
+            var finalG1B = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG1B.Name);
+            var finalG2A = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == songG2A.Name);
             int totalSongsOnMember = activeSongs.Count(s => s.PartyMemberName == testMember);
 
             string result;
-            if (!g1aFound && g1bFound && g2aFound && totalSongsOnMember == 2)
+            if (!g1aFoundFinal && finalG1B != null && finalG2A != null && totalSongsOnMember == 2)
             {
                 result = "PASS";
             }
@@ -253,7 +287,8 @@ namespace BardSongTracker
             {
                 result = "FAIL";
             }
-            result += $" - Applied G1A, G1B, then G2A. Expected G1B & G2A. Found G1A:{g1aFound}, G1B:{g1bFound}, G2A:{g2aFound}. Count: {totalSongsOnMember}";
+            result += $" - Applied G1A, G1B, then G2A. Expected G1B & G2A. Found G1A:{g1aFoundFinal}, G1B:{finalG1B != null}, G2A:{finalG2A != null}. Count: {totalSongsOnMember}." +
+                      $" G1B Casting: {finalG1B?.IsCasting}, G2A Casting: {finalG2A?.IsCasting}.";
 
             ResetTestEnvironment();
             return result;
@@ -276,27 +311,46 @@ namespace BardSongTracker
             SongData testSong = new SongData { Name = originalSong.Name, MinDuration = 1, MaxDuration = 1 };
             // To make ApplySongToMember pick this up, we'd need to modify songList or how it's retrieved.
             // Easiest for now: add a temporary song.
-            var tempSongForTest = new SongData { Name = "QuickSong", MinDuration = 1, MaxDuration = 1};
+            var tempSongForTest = new SongData { Name = "QuickCastAndBuffSong", MinDuration = 1, MaxDuration = 1, CastingTimeMinSeconds = 1, CastingTimeMaxSeconds = 1 };
             songList.Add(tempSongForTest);
-            PopulateSongComboBoxes(); // Refresh comboboxes with the new song
+            PopulateSongComboBoxes();
             song1AComboBox.SelectedItem = tempSongForTest.Name;
 
             isRunning = true;
             ApplySongsToSelectedMembers();
+            var activeTestSong = activeSongs.FirstOrDefault(s => s.PartyMemberName == testMember && s.AppliedSong.Name == tempSongForTest.Name);
 
-            string message = $"TIMER TEST (Manual Observation):\nSong '{tempSongForTest.Name}' applied to '{testMember}' on Group 1, Slot A.\n" +
-                             $"It should disappear from the label '{timer1ALabel.Name}' (and activeSongs list) after ~1 second.\n" +
-                             "Click OK when ready to check (or after a few seconds).";
-            MessageBox.Show(message, "Manual Timer Test");
+            if (activeTestSong == null || !activeTestSong.IsCasting)
+            {
+                ResetTestEnvironment();
+                return "FAIL - QuickSong did not start casting.";
+            }
 
-            // Check after user clicks OK.
-            bool songStillActive = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == tempSongForTest.Name);
-            string result = !songStillActive ? "PASS (presumably)" : "FAIL (potentially, or timer too long/short)";
-            result += $" - Song '{tempSongForTest.Name}' active status after delay: {!songStillActive}. Label: {timer1ALabel.Text}";
+            string message = $"TIMER TEST (Manual Observation):\n" +
+                             $"1. Observe '{tempSongForTest.Name}' CASTING on '{testMember}' (approx 1s).\n" +
+                             $"2. Observe it switch to BUFFING (approx 1s).\n" +
+                             $"3. Observe BUFF expiration (label clears/resets).\n" +
+                             $"Click OK after observing all stages (approx 2-3 seconds total).";
+            MessageBox.Show(message, "Manual Timer Test Sequence");
+
+            // Check after user clicks OK. The song should be completely gone.
+            bool songStillFullyActive = activeSongs.Any(s => s.PartyMemberName == testMember && s.AppliedSong.Name == tempSongForTest.Name);
+            string result;
+            if (!songStillFullyActive)
+            {
+                // Further check: was it in buff state before disappearing? This is hard to guarantee timing for.
+                // For this basic test, just checking it's gone is the main goal.
+                result = "PASS (presumably, song removed after cast and buff)";
+            }
+            else
+            {
+                result = "FAIL (song still active or did not complete full cycle)";
+            }
+            result += $" - Song '{tempSongForTest.Name}' active status after delay: {!songStillFullyActive}. Label: {timer1ALabel.Text}";
 
             // Cleanup the temporary song
-            songList.Remove(tempSongForTest);
-            PopulateSongComboBoxes(); // Refresh again
+            songList.Remove(tempSongForTest); // Ensure it's removed
+            PopulateSongComboBoxes();
             ResetTestEnvironment();
             return result;
         }
@@ -369,7 +423,17 @@ namespace BardSongTracker
                 // Stop all timers - Full stop, not pause
                 foreach (var activeSong in activeSongs.ToList()) // ToList() for safe removal
                 {
-                    RemoveOldSong(activeSong, timerExpired: false, clearLabel: true);
+                    if (activeSong.CastingTimer != null)
+                    {
+                        activeSong.CastingTimer.Stop();
+                        activeSong.CastingTimer.Dispose();
+                    }
+                    if (activeSong.SongTimer != null)
+                    {
+                        activeSong.SongTimer.Stop();
+                        activeSong.SongTimer.Dispose();
+                    }
+                    // No need to call RemoveOldSong here as we are clearing the whole list
                 }
                 activeSongs.Clear(); // Ensure the list is empty
                 InitializeTimerLabels(); // Reset labels
@@ -448,73 +512,109 @@ namespace BardSongTracker
         {
             if (!isRunning) return;
 
-            // Check if this exact song is already active on the member in the correct slot
-            var existingSpecificSong = activeSongs.FirstOrDefault(s =>
+            // Check if this exact song (identified by name) is already active OR CASTING for this member in this slot
+            var existingSongInSlot = activeSongs.FirstOrDefault(s =>
                 s.PartyMemberName == memberName &&
-                s.AppliedSong.Name == songToApply.Name &&
                 s.GroupNumber == groupNum &&
                 s.SongSlotInGroup == slotNum);
 
-            if (existingSpecificSong != null)
+            if (existingSongInSlot != null)
             {
-                // Refresh existing song timer
-                existingSpecificSong.SongTimer.Stop();
-                existingSpecificSong.RemainingSeconds = random.Next(songToApply.MinDuration, songToApply.MaxDuration + 1);
-                existingSpecificSong.SongTimer.Interval = 1000; // Tick every second
-                existingSpecificSong.AppliedTimestamp = DateTime.UtcNow;
-                existingSpecificSong.SongTimer.Start();
-                UpdateTimerLabel(existingSpecificSong); // Update label immediately
-                return;
-            }
-
-            // Get all songs currently on the member
-            var memberSongs = activeSongs.Where(s => s.PartyMemberName == memberName).ToList();
-
-            // If member has 2 songs already, and this is a new one for a slot that's occupied by a *different* song.
-            // Or if this song is for a slot that's currently free but the member has 2 other songs.
-            // The key is to identify which song to *replace* based on the slot.
-            var songInThisSlot = memberSongs.FirstOrDefault(s => s.GroupNumber == groupNum && s.SongSlotInGroup == slotNum);
-
-            if (songInThisSlot != null && songInThisSlot.AppliedSong.Name != songToApply.Name)
-            {
-                RemoveOldSong(songInThisSlot, timerExpired: false, clearLabel: false); // Don't clear label yet, new song will overwrite
-            }
-            else if (songInThisSlot == null && memberSongs.Count >= 2)
-            {
-                // This case is tricky: member has 2 songs, but *this* slot is free.
-                // This implies the two songs are in different groups or different slots.
-                // This situation should ideally be handled by UI preventing selection, or we pick the globally oldest.
-                // For now, if this slot is free, we add. If it means a 3rd song overall for the member, that's an issue.
-                // The current logic: if the *target slot* is free, we try to add.
-                // Let's refine: A member can only have two songs. If this slot is free, but they have two songs elsewhere,
-                // we must remove the oldest of those two.
-                if (memberSongs.Count >=2) {
-                    var oldestSong = memberSongs.OrderBy(s => s.AppliedTimestamp).First();
-                    RemoveOldSong(oldestSong, timerExpired: false, clearLabel: true);
+                if (existingSongInSlot.AppliedSong.Name == songToApply.Name)
+                {
+                    // Same song is being re-applied to the same slot
+                    if (existingSongInSlot.IsCasting)
+                    {
+                        // Restart casting
+                        existingSongInSlot.CastingTimer.Stop();
+                        existingSongInSlot.RemainingCastingSeconds = random.Next(songToApply.CastingTimeMinSeconds, songToApply.CastingTimeMaxSeconds + 1);
+                        existingSongInSlot.AppliedTimestamp = DateTime.UtcNow; // Update timestamp
+                        existingSongInSlot.CastingTimer.Start();
+                    }
+                    else // It's an active buff
+                    {
+                        // Refresh buff timer
+                        existingSongInSlot.SongTimer.Stop();
+                        existingSongInSlot.RemainingSeconds = random.Next(songToApply.MinDuration, songToApply.MaxDuration + 1);
+                        existingSongInSlot.AppliedTimestamp = DateTime.UtcNow; // Update timestamp
+                        existingSongInSlot.SongTimer.Start();
+                    }
+                    UpdateTimerLabel(existingSongInSlot);
+                    return;
+                }
+                else
+                {
+                    // Different song in this slot, so it's an overwrite
+                    RemoveOldSong(existingSongInSlot, timerExpired: false, clearLabel: false);
                 }
             }
 
+            // If we're here, it's a new song for this slot (either slot was empty or an old song was removed).
+            // Now, check the 2-song-per-member limit.
+            var memberSongs = activeSongs.Where(s => s.PartyMemberName == memberName).ToList();
+            if (memberSongs.Count >= 2)
+            {
+                // Find the oldest song on this member (could be casting or buffing) and remove it.
+                var oldestSongOnMember = memberSongs.OrderBy(s => s.AppliedTimestamp).First();
+                RemoveOldSong(oldestSongOnMember, timerExpired: false, clearLabel: true);
+            }
 
-            // Add the new song
+            // Add the new song, starting with casting phase
             var newActiveSong = new ActiveSongInfo
             {
                 PartyMemberName = memberName,
                 AppliedSong = songToApply,
-                AssociatedLabel = displayLabel, // This needs to be specific to the member, not the group timer label
+                AssociatedLabel = displayLabel,
                 GroupNumber = groupNum,
                 SongSlotInGroup = slotNum,
-                AppliedTimestamp = DateTime.UtcNow
+                AppliedTimestamp = DateTime.UtcNow,
+                IsCasting = true
             };
 
-            newActiveSong.RemainingSeconds = random.Next(songToApply.MinDuration, songToApply.MaxDuration + 1);
-            newActiveSong.SongTimer = new Timer();
-            newActiveSong.SongTimer.Interval = 1000; // Tick every second to update RemainingSeconds
-            newActiveSong.SongTimer.Tick += SongTimer_Tick;
-            newActiveSong.SongTimer.Tag = newActiveSong; // Store a reference to ActiveSongInfo
+            newActiveSong.RemainingCastingSeconds = random.Next(songToApply.CastingTimeMinSeconds, songToApply.CastingTimeMaxSeconds + 1);
+            newActiveSong.CastingTimer = new Timer();
+            newActiveSong.CastingTimer.Interval = 1000;
+            newActiveSong.CastingTimer.Tick += CastingTimer_Tick;
+            newActiveSong.CastingTimer.Tag = newActiveSong;
 
             activeSongs.Add(newActiveSong);
-            newActiveSong.SongTimer.Start();
-            UpdateTimerLabel(newActiveSong); // Update label with new song info
+            newActiveSong.CastingTimer.Start();
+            UpdateTimerLabel(newActiveSong);
+        }
+
+        private void CastingTimer_Tick(object sender, EventArgs e)
+        {
+            Timer timer = sender as Timer;
+            if (timer == null) return;
+
+            ActiveSongInfo activeSong = timer.Tag as ActiveSongInfo;
+            if (activeSong == null || !activeSong.IsCasting)
+            {
+                // Safety check, should not happen if timer is managed correctly
+                timer.Stop();
+                timer.Dispose();
+                return;
+            }
+
+            activeSong.RemainingCastingSeconds--;
+            UpdateTimerLabel(activeSong);
+
+            if (activeSong.RemainingCastingSeconds <= 0)
+            {
+                activeSong.CastingTimer.Stop();
+                activeSong.CastingTimer.Dispose();
+                activeSong.CastingTimer = null; // Important for RemoveOldSong checks
+                activeSong.IsCasting = false;
+
+                // Start main buff timer
+                activeSong.RemainingSeconds = random.Next(activeSong.AppliedSong.MinDuration, activeSong.AppliedSong.MaxDuration + 1);
+                activeSong.SongTimer = new Timer();
+                activeSong.SongTimer.Interval = 1000;
+                activeSong.SongTimer.Tick += SongTimer_Tick;
+                activeSong.SongTimer.Tag = activeSong;
+                activeSong.SongTimer.Start();
+                UpdateTimerLabel(activeSong); // Update label to show buff started
+            }
         }
 
         private void SongTimer_Tick(object sender, EventArgs e)
@@ -523,7 +623,14 @@ namespace BardSongTracker
             if (timer == null) return;
 
             ActiveSongInfo activeSong = timer.Tag as ActiveSongInfo;
-            if (activeSong == null) return;
+            // Ensure this tick is for a buffing song, not a casting one that hasn't been switched properly.
+            if (activeSong == null || activeSong.IsCasting)
+            {
+                // Safety check
+                timer.Stop();
+                timer.Dispose();
+                return;
+            }
 
             activeSong.RemainingSeconds--;
 
@@ -547,8 +654,19 @@ namespace BardSongTracker
             // This part of the requirement (individual timer display per member per song)
             // is not fully met by the current UI design (single label per song slot in a group).
             // The current implementation will make the group label reflect one of the songs.
-            string slotName = activeSong.SongSlotInGroup == 0 ? "Song A" : "Song B";
-            activeSong.AssociatedLabel.Text = $"{slotName} ({activeSong.PartyMemberName.Substring(0, Math.Min(3, activeSong.PartyMemberName.Length))}...): {activeSong.AppliedSong.Name.Substring(0, Math.Min(5, activeSong.AppliedSong.Name.Length))}... {activeSong.RemainingSeconds}s";
+            // For simplicity, using full names for now. Abbreviation can be added later.
+            string songName = activeSong.AppliedSong.Name;
+            string memberName = activeSong.PartyMemberName;
+            // string slotName = activeSong.SongSlotInGroup == 0 ? "Song A" : "Song B"; // Less relevant now with member name in label
+
+            if (activeSong.IsCasting)
+            {
+                activeSong.AssociatedLabel.Text = $"Cast: {songName} ({activeSong.RemainingCastingSeconds}s) on {memberName}";
+            }
+            else
+            {
+                activeSong.AssociatedLabel.Text = $"{songName} ({activeSong.RemainingSeconds}s) on {memberName}";
+            }
         }
 
 
@@ -556,8 +674,18 @@ namespace BardSongTracker
         {
             if (songToRemove == null) return;
 
-            songToRemove.SongTimer.Stop();
-            songToRemove.SongTimer.Dispose();
+            if (songToRemove.CastingTimer != null)
+            {
+                songToRemove.CastingTimer.Stop();
+                songToRemove.CastingTimer.Dispose();
+                songToRemove.CastingTimer = null;
+            }
+            if (songToRemove.SongTimer != null)
+            {
+                songToRemove.SongTimer.Stop();
+                songToRemove.SongTimer.Dispose();
+                songToRemove.SongTimer = null;
+            }
 
             if (clearLabel && songToRemove.AssociatedLabel != null)
             {

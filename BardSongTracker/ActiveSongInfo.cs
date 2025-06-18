@@ -13,5 +13,10 @@ namespace BardSongTracker
         public int GroupNumber { get; set; } // 1 or 2
         public int SongSlotInGroup { get; set; } // 0 for A, 1 for B
         public DateTime AppliedTimestamp { get; set; }
+
+        // New properties for casting phase
+        public bool IsCasting { get; set; }
+        public Timer CastingTimer { get; set; }
+        public int RemainingCastingSeconds { get; set; }
     }
 }
