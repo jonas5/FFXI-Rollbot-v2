@@ -118,6 +118,9 @@ namespace BardSongHelper_WF
         private bool manualFollowActive = false;
         private string manualFollowTargetName = "";
 
+        private bool isBardRotationActive = false;
+        private CancellationTokenSource bardRotationCancellationTokenSource;
+
         #endregion
 
         public Form1()
@@ -199,6 +202,62 @@ namespace BardSongHelper_WF
             #endregion
 
             this.Text = "Bard Song Helper v1.0"; // Added
+            // Set initial state of Group 2 controls based on the toggle's default value
+            toggleGroup2Switch_CheckedChanged(toggleGroup2Switch, EventArgs.Empty);
+            UpdatePolidButtonText(); // Call UpdatePolidButtonText as the last line
+        }
+
+        private void toggleGroup2Switch_CheckedChanged(object sender, EventArgs e)
+        {
+            bool isGroup2Enabled = toggleGroup2Switch.Checked;
+
+            // Handle controls within groupBoxSongGroup2
+            // Iterate over all controls in groupBoxSongGroup2 and enable/disable them,
+            // except for the toggleGroup2Switch itself.
+            foreach (Control ctrl in groupBoxSongGroup2.Controls)
+            {
+                if (ctrl.Name == toggleGroup2Switch.Name) // Check by Name property for robustness
+                {
+                    // Ensure the toggle itself always remains enabled
+                    ctrl.Enabled = true;
+                }
+                else
+                {
+                    ctrl.Enabled = isGroup2Enabled;
+                }
+            }
+
+            // The toggleGroup2Switch should always be enabled.
+            // If it was somehow disabled by its parent being targeted by another piece of code (not the case here),
+            // this explicit re-enablement would be a safeguard.
+            // Given the loop above, this specific line might be redundant but doesn't hurt.
+            toggleGroup2Switch.Enabled = true;
+
+            // Handle other Group 2 related group boxes which do NOT contain the toggle.
+            // These can be enabled/disabled wholesale.
+            groupBoxPartyGroup2.Enabled = isGroup2Enabled;
+            groupBoxBardOptionsGroup2.Enabled = isGroup2Enabled;
+        }
+
+        // New public method to update POLID button text
+        public void UpdatePolidButtonText()
+        {
+            if (Select_POLID.Text == "SELECTED")
+            {
+                // If an instance is already selected and API is loaded,
+                // the button should remain "SELECTED" and green.
+                return;
+            }
+            if (POLID.Items.Count == 0)
+            {
+                Select_POLID.Text = "Refresh";
+                Select_POLID.BackColor = System.Drawing.SystemColors.Control;
+            }
+            else
+            {
+                Select_POLID.Text = "Select";
+                Select_POLID.BackColor = System.Drawing.SystemColors.Control;
+            }
         }
 
         private void ActivityButton_Click(object sender, EventArgs e)
@@ -236,24 +295,71 @@ namespace BardSongHelper_WF
 
         private void Select_POLID_Click(object sender, EventArgs e)
         {
+            if (Select_POLID.Text == "Refresh")
+            {
+                // Clear POLID and processids lists
+                POLID.Items.Clear();
+                processids.Items.Clear();
+
+                // Logic to find POL processes (copied from constructor)
+                Process[] pol = Process.GetProcessesByName("pol");
+                if (pol.Length < 1)
+                {
+                    // Show MetroMessageBox (copied from constructor)
+                    MetroMessageBox.Show(this, "No POL instances were able to be located." + "\n\n" +
+                        "Please note: If you use a private server make sure the program used to access it has been renamed to POL " +
+                        "otherwise this bot will not be able to locate it.", "Notice:", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+                else
+                {
+                    for (int i = 0; i < pol.Length; i++)
+                    {
+                        POLID.Items.Add(pol[i].MainWindowTitle);
+                        processids.Items.Add(pol[i].Id);
+                    }
+                    if (pol.Length > 0) // Ensure items were actually added before setting index
+                    {
+                        POLID.SelectedIndex = 0;
+                        processids.SelectedIndex = 0;
+                    }
+                }
+                UpdatePolidButtonText(); // Update button based on new scan
+                return;
+            }
+
+            // This part only runs if button was "Select"
+            if (POLID.SelectedItem == null)
+            {
+                MetroMessageBox.Show(this, "Please select a POL instance from the list.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             processids.SelectedIndex = POLID.SelectedIndex;
-            _api = new EliteAPI((int)processids.SelectedItem);
-            Select_POLID.Text = "SELECTED";
-            Select_POLID.BackColor = Color.Green;
-
-            if (firstSelect == false)
+            try
             {
+                _api = new EliteAPI((int)processids.SelectedItem);
+                Select_POLID.Text = "SELECTED";
+                Select_POLID.BackColor = Color.Green;
 
-                EliteAPI.ChatEntry cl = _api.Chat.GetNextChatLine();
-                while (cl != null)
+                if (firstSelect == false)
                 {
-                    cl = _api.Chat.GetNextChatLine();
+                    EliteAPI.ChatEntry cl = _api.Chat.GetNextChatLine();
+                    while (cl != null)
+                    {
+                        cl = _api.Chat.GetNextChatLine();
+                    }
+                    GrabParty();
+                    firstSelect = true;
                 }
-
-                GrabParty();
-
-                firstSelect = true;
+            }
+            catch (Exception ex)
+            {
+                MetroMessageBox.Show(this, $"Failed to connect to POL instance: {ex.Message}", "API Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Reset button state if API init fails
+                // Select_POLID.Text = "Select"; // UpdatePolidButtonText will handle this
+                // Select_POLID.BackColor = System.Drawing.SystemColors.Control; // UpdatePolidButtonText will handle this
+                _api = null; // Ensure API is null if connection failed
+                UpdatePolidButtonText(); // Re-evaluate button state
             }
         }
 
@@ -286,7 +392,30 @@ namespace BardSongHelper_WF
             {
                 timerBusy = true;
 
-                if (botRunning == true && !knownCities.Contains(_api.Player.ZoneId) && isMoving == false && manualFollowActive == false) 
+                // --- Auto-join logic during bard rotation ---
+                if (isBardRotationActive && _api != null && _api.Player.LoginStatus == (int)LoginStatus.LoggedIn)
+                {
+                    EliteAPI.ChatEntry chatLine = _api.Chat.GetNextChatLine();
+                    while (chatLine != null)
+                    {
+                        string plainText = System.Text.RegularExpressions.Regex.Replace(chatLine.Text, "<[^>]*>", ""); // Strip HTML/XML tags
+
+                        if (plainText.ToLower().Contains("invites you to join"))
+                        {
+                            var partyMembers = _api.Party.GetPartyMembers();
+                            if (partyMembers == null || partyMembers.Count <= 1)
+                            {
+                                _api.ThirdParty.SendString("/join");
+                                await Task.Delay(1000); // Wait a moment for join to process
+                                GrabParty(); // Refresh party UI elements
+                            }
+                            break;
+                        }
+                        chatLine = _api.Chat.GetNextChatLine();
+                    }
+                }
+
+                if (botRunning == true && !isBardRotationActive && !knownCities.Contains(_api.Player.ZoneId) && isMoving == false && manualFollowActive == false)
                 {
                     // Determine which follow target to use for automated song cycle following
                     if (currentFollowTargetGroup == 1)
@@ -563,6 +692,28 @@ namespace BardSongHelper_WF
         {
             if (_api == null || !botRunning) return;
 
+            // Check and use Soul Voice if toggled
+            if (toggleSoulVoiceSwitch.Checked)
+            {
+                // Check if player actually has Soul Voice and if it's ready (optional but good practice)
+                // For now, we assume the player manages this.
+                _api.ThirdParty.SendString("/ja \"Soul Voice\" <me>");
+
+                // Brief delay for JA to activate
+                await Task.Delay(TimeSpan.FromMilliseconds(500)); // 0.5 second delay, adjust as needed
+
+                // Turn off the toggle - it's a one-time use per activation
+                if (toggleSoulVoiceSwitch.InvokeRequired)
+                {
+                    toggleSoulVoiceSwitch.Invoke(new MethodInvoker(delegate { toggleSoulVoiceSwitch.Checked = false; }));
+                }
+                else
+                {
+                    toggleSoulVoiceSwitch.Checked = false;
+                }
+            }
+
+            // Existing song processing logic starts here
             for (int i = 0; i < selectedSongs.Count; i++)
             {
                 SongData songToApply = selectedSongs[i];
@@ -651,9 +802,30 @@ namespace BardSongHelper_WF
                         }
                     }
 
-                    await Task.Delay(TimeSpan.FromSeconds(songToApply.CastTimeSeconds));
-                }
+                    // THIS IS THE MODIFIED DELAY:
+                    int songPlayDuration = GetSongDelaySeconds();
+                    await Task.Delay(TimeSpan.FromSeconds(songPlayDuration));
+                } // End of targetMember loop for the current song
+
+                // THE PREVIOUS userDefinedDelay LOGIC THAT WAS HERE IS NOW REMOVED.
+            } // End of loop for selectedSongs (Song 1, Song 2)
+        }
+
+        private void textBoxSongDelay_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true; // Block non-numeric input
             }
+        }
+
+        private int GetSongDelaySeconds()
+        {
+            if (int.TryParse(textBoxSongDelay.Text, out int delay) && delay > 0)
+            {
+                return delay;
+            }
+            return 10; // Default to 10 seconds if input is invalid, empty, zero, or negative
         }
 
         // Populates all song selection ComboBoxes with names from the Songs list
@@ -894,6 +1066,157 @@ namespace BardSongHelper_WF
 
                 }
             }
+        }
+
+        private async void toggleBardRotationSwitch_CheckedChanged(object sender, EventArgs e)
+        {
+            if (toggleBardRotationSwitch.Checked)
+            {
+                if (isBardRotationActive) return; // Already running
+
+                if (!toggleGroup2Switch.Checked)
+                {
+                    MetroMessageBox.Show(this, "Bard Rotation requires Group 2 to be enabled. Please enable Group 2 first.", "Rotation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    toggleBardRotationSwitch.Checked = false; // Revert toggle
+                    return;
+                }
+
+                if (_api == null || _api.Player.LoginStatus != (int)LoginStatus.LoggedIn)
+                {
+                    MetroMessageBox.Show(this, "Please connect to a POL instance first.", "API Not Ready", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    toggleBardRotationSwitch.Checked = false; // Revert toggle
+                    return;
+                }
+
+                isBardRotationActive = true;
+                bardRotationCancellationTokenSource = new CancellationTokenSource();
+                // ActivityButton.Enabled = false; // Optional: disable manual start/stop
+
+                try
+                {
+                    await ExecuteBardRotation(bardRotationCancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    MetroMessageBox.Show(this, "Bard Rotation was cancelled.", "Rotation Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MetroMessageBox.Show(this, $"An error occurred during Bard Rotation: {ex.Message}", "Rotation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    isBardRotationActive = false;
+                    if (this.IsHandleCreated && toggleBardRotationSwitch.IsHandleCreated) // Ensure control is still valid
+                    {
+                        toggleBardRotationSwitch.Checked = false; // Ensure toggle is off
+                    }
+                    // ActivityButton.Enabled = true; // Re-enable
+                    if (bardRotationCancellationTokenSource != null)
+                    {
+                        bardRotationCancellationTokenSource.Dispose();
+                        bardRotationCancellationTokenSource = null;
+                    }
+                }
+            }
+            else // Toggle switched OFF
+            {
+                if (isBardRotationActive && bardRotationCancellationTokenSource != null && !bardRotationCancellationTokenSource.IsCancellationRequested)
+                {
+                    bardRotationCancellationTokenSource.Cancel();
+                }
+            }
+        }
+
+        private async Task ExecuteBardRotation(CancellationToken cancellationToken)
+        {
+            // Helper function to send command and delay
+            async Task SendCommand(string command, int delayMs = 1000)
+            {
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                _api.ThirdParty.SendString(command);
+                await Task.Delay(delayMs, cancellationToken);
+            }
+
+            // Helper function to play songs for a group
+            async Task PlaySongsForGroup(int groupNum, string followTargetName, List<SongData> songsToPlay, List<PartyRequirements> partyMembers)
+            {
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+
+                if (!string.IsNullOrWhiteSpace(followTargetName) && followTargetName != "Follower target name." && followTargetName != "Follower target G2 name.")
+                {
+                    await SendCommand($"/follow \"{followTargetName}\"");
+                    await Task.Delay(3000, cancellationToken);
+                }
+
+                // Check party status. Auto-join should be active via Song_Timer_TickAsync.
+                await Task.Delay(2000, cancellationToken); // Wait 2s for potential auto-join to occur
+
+                if (_api.Party.GetPartyMembers() == null || _api.Party.GetPartyMembers().Count <= 1)
+                {
+                    // If still not in party, try a direct /join
+                    await SendCommand("/join", 1500);
+                    await Task.Delay(2000, cancellationToken); // Wait for join to process
+
+                    if (_api.Party.GetPartyMembers() == null || _api.Party.GetPartyMembers().Count <= 1)
+                    {
+                        MetroMessageBox.Show(this, $"Bard Rotation (Group {groupNum}): Failed to join a party. Aborting group.", "Party Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+
+                GrabParty();
+
+                foreach (var song in songsToPlay)
+                {
+                    if (song == null) continue;
+                    if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+
+                    // Announce song to party chat
+                    await SendCommand($"/p Now playing: {song.SongName}!", 1500);
+                    _api.ThirdParty.SendString($"/ma \"{song.SongName}\" <me>");
+
+                    // THIS IS THE MODIFIED DELAY:
+                    int songPlayDuration = GetSongDelaySeconds();
+                    await Task.Delay(songPlayDuration * 1000, cancellationToken);
+                }
+
+                await SendCommand($"/p Bard Rotation: Group {groupNum} songs complete. Leaving party.", 1500); // Updated announcement
+                await SendCommand("/pcmd leave", 2000); // Changed command
+            }
+
+            // --- Rotation Start ---
+            MetroMessageBox.Show(this, "Bard Rotation Started. Ensure you are in a party or can accept invites for each group.", "Rotation Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            await Task.Delay(2000, cancellationToken);
+
+            // GROUP 1
+            var group1Songs = new List<SongData> {
+                Songs.FirstOrDefault(s => s.Position == SongGroup1_Song1_ComboBox.SelectedIndex),
+                Songs.FirstOrDefault(s => s.Position == SongGroup1_Song2_ComboBox.SelectedIndex)
+            };
+            await PlaySongsForGroup(1, FollowerTarget.Text, group1Songs, Member_List_Group1);
+            if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+
+            MetroMessageBox.Show(this, "Bard Rotation: Group 1 complete. Waiting for new party invite for Group 2 (auto-join is active).", "Rotation Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            await Task.Delay(5000, cancellationToken); // Shortened wait
+            if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+
+            // GROUP 2
+            if (!toggleGroup2Switch.Checked)
+            {
+                MetroMessageBox.Show(this, "Bard Rotation: Group 2 was disabled (UI toggle). Skipping Group 2.", "Rotation Info", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            else
+            {
+                var group2Songs = new List<SongData> {
+                    Songs.FirstOrDefault(s => s.Position == SongGroup2_Song1_ComboBox.SelectedIndex),
+                    Songs.FirstOrDefault(s => s.Position == SongGroup2_Song2_ComboBox.SelectedIndex)
+                };
+                await PlaySongsForGroup(2, FollowerTargetGroup2.Text, group2Songs, Member_List_Group2);
+            }
+
+            if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+            MetroMessageBox.Show(this, "Bard Rotation Finished.", "Rotation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

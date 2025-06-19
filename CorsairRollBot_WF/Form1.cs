@@ -425,16 +425,35 @@ namespace CorsairRollBot_WF
                         POLID.SelectedIndex = 0;
                         processids.SelectedIndex = 0;
                     }
+                    else
+                    {
+                        UpdatePolidButtonText(); // Add call here if no POL instances found
+                    }
                 }
             }
             else
             {
                 MessageBox.Show("This program can not function without EliteMMO.API.dll and EliteAPI.dll");
                 // this.Close();
+                UpdatePolidButtonText(); // Add call here if DLLs are missing
             }
 
             #endregion
 
+            // UpdatePolidButtonText(); // This call is already present from the previous successful patch
+        }
+
+        // New method to update POLID button text
+        private void UpdatePolidButtonText()
+        {
+            if (POLID.Items.Count == 0)
+            {
+                Select_POLID.Text = "Refresh";
+            }
+            else
+            {
+                Select_POLID.Text = "Select";
+            }
         }
 
         private void ActivityButton_Click(object sender, EventArgs e)
@@ -472,10 +491,52 @@ namespace CorsairRollBot_WF
 
         private void Select_POLID_Click(object sender, EventArgs e)
         {
+            // If button text is "Refresh"
+            if (Select_POLID.Text == "Refresh")
+            {
+                // Re-scan for POL instances (similar to constructor logic)
+                POLID.Items.Clear();
+                processids.Items.Clear();
 
+                List<string> processNames = new List<string> { "pol", "edenxi", "xiloader" };
+                List<Process> foundProcesses = new List<Process>();
+
+                foreach (string name in processNames)
+                {
+                    Process[] processes = Process.GetProcessesByName(name);
+                    if (processes.Length > 0)
+                    {
+                        foundProcesses.AddRange(processes);
+                    }
+                }
+
+                if (foundProcesses.Count < 1)
+                {
+                    MetroMessageBox.Show(this, "No game instances (pol.exe, edenxi.exe, xiloader.exe) were located." + "\n\n" +
+                        "Please ensure the game is running. If you use a private server, make sure the executable is named appropriately.", "Notice:", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+                else
+                {
+                    foreach (Process process in foundProcesses)
+                    {
+                        POLID.Items.Add(process.MainWindowTitle);
+                        processids.Items.Add(process.Id);
+                    }
+
+                    if (POLID.Items.Count > 0)
+                    {
+                        POLID.SelectedIndex = 0;
+                        processids.SelectedIndex = 0;
+                    }
+                }
+                UpdatePolidButtonText(); // Update button text after re-scan
+                return; // Return without proceeding to API initialization
+            }
+
+            // Existing logic for selecting a POLID and initializing the API
             processids.SelectedIndex = POLID.SelectedIndex;
             _api = new EliteAPI((int)processids.SelectedItem);
-            Select_POLID.Text = "SELECTED";
+            Select_POLID.Text = "Selected"; // Changed from "SELECTED" to "Selected"
             Select_POLID.BackColor = Color.Green;
 
             foreach (Process dats in Process.GetProcessesByName("pol").Where(dats => POLID.Text == dats.MainWindowTitle))

@@ -172,11 +172,16 @@ namespace BardSongHelper_WF
             //
             // groupBox3
             //
+            this.labelSoulVoice = new MetroFramework.Controls.MetroLabel();
+            this.toggleSoulVoiceSwitch = new MetroFramework.Controls.MetroToggle();
+
+            this.groupBox3.Controls.Add(this.labelSoulVoice);
+            this.groupBox3.Controls.Add(this.toggleSoulVoiceSwitch);
             this.groupBox3.Controls.Add(this.groupBox7);
             this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox3.Location = new System.Drawing.Point(11, 224);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(239, 80);
+            this.groupBox3.Size = new System.Drawing.Size(300, 80); // Increased width
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = " BARD OPTIONS (Group 1) ";
@@ -186,10 +191,31 @@ namespace BardSongHelper_WF
             this.groupBox7.Controls.Add(this.label1);
             this.groupBox7.Controls.Add(this.FollowerTarget);
             this.groupBox7.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox7.Location = new System.Drawing.Point(6, 19); 
+            this.groupBox7.Location = new System.Drawing.Point(6, 19);
             this.groupBox7.Name = "groupBox7";
             this.groupBox7.Size = new System.Drawing.Size(163, 54);
-            this.groupBox7.TabIndex = 8;
+            this.groupBox7.TabIndex = 0; // First control in this group box
+
+            //
+            // labelSoulVoice
+            //
+            this.labelSoulVoice.AutoSize = true;
+            this.labelSoulVoice.Location = new System.Drawing.Point(175, 22); // Positioned to the right of groupBox7
+            this.labelSoulVoice.Name = "labelSoulVoice";
+            this.labelSoulVoice.Size = new System.Drawing.Size(100, 19);
+            this.labelSoulVoice.TabIndex = 1; // Next control
+            this.labelSoulVoice.Text = "Soul Voice Next:";
+            //
+            // toggleSoulVoiceSwitch
+            //
+            this.toggleSoulVoiceSwitch.AutoSize = true;
+            this.toggleSoulVoiceSwitch.Location = new System.Drawing.Point(185, 45); // Below labelSoulVoice
+            this.toggleSoulVoiceSwitch.Name = "toggleSoulVoiceSwitch";
+            this.toggleSoulVoiceSwitch.Size = new System.Drawing.Size(80, 17);
+            this.toggleSoulVoiceSwitch.TabIndex = 2; // Next control
+            this.toggleSoulVoiceSwitch.Text = "Off";
+            this.toggleSoulVoiceSwitch.UseSelectable = true;
+            this.toggleSoulVoiceSwitch.Checked = false; // Default to off
             this.groupBox7.TabStop = false;
             this.groupBox7.Text = " FOLLOW TARGET ";
             //
@@ -234,6 +260,20 @@ namespace BardSongHelper_WF
             //
             // groupBoxSongGroup2
             //
+            // toggleGroup2Switch
+            // NOTE: This control is added first to the groupbox for TabIndex reasons.
+            this.toggleGroup2Switch = new MetroFramework.Controls.MetroToggle();
+            this.toggleGroup2Switch.AutoSize = true;
+            this.toggleGroup2Switch.Location = new System.Drawing.Point(150, 0); // Adjusted X, Y to be near the title, within the groupbox
+            this.toggleGroup2Switch.Name = "toggleGroup2Switch";
+            this.toggleGroup2Switch.Size = new System.Drawing.Size(80, 17);
+            this.toggleGroup2Switch.TabIndex = 0; // First control in this group
+            this.toggleGroup2Switch.Text = "Off"; // Will show "On"/"Off"
+            this.toggleGroup2Switch.UseSelectable = true;
+            this.toggleGroup2Switch.Checked = true; // Default to enabled
+            this.toggleGroup2Switch.CheckedChanged += new System.EventHandler(this.toggleGroup2Switch_CheckedChanged);
+
+            this.groupBoxSongGroup2.Controls.Add(this.toggleGroup2Switch); // Add toggle first
             this.groupBoxSongGroup2.Controls.Add(this.SongGroup2_Song1_ComboBox);
             this.groupBoxSongGroup2.Controls.Add(this.SongGroup2_Song2_ComboBox);
             this.groupBoxSongGroup2.Controls.Add(this.SongGroup2_Timer1_Label);
@@ -254,7 +294,7 @@ namespace BardSongHelper_WF
             this.SongGroup2_Song1_ComboBox.MaxDropDownItems = 5;
             this.SongGroup2_Song1_ComboBox.Name = "SongGroup2_Song1_ComboBox";
             this.SongGroup2_Song1_ComboBox.Size = new System.Drawing.Size(227, 29);
-            this.SongGroup2_Song1_ComboBox.TabIndex = 2;
+            this.SongGroup2_Song1_ComboBox.TabIndex = 1; // Adjusted TabIndex
             this.SongGroup2_Song1_ComboBox.UseSelectable = true;
             //
             // SongGroup2_Song2_ComboBox
@@ -265,7 +305,7 @@ namespace BardSongHelper_WF
             this.SongGroup2_Song2_ComboBox.MaxDropDownItems = 5;
             this.SongGroup2_Song2_ComboBox.Name = "SongGroup2_Song2_ComboBox";
             this.SongGroup2_Song2_ComboBox.Size = new System.Drawing.Size(226, 29);
-            this.SongGroup2_Song2_ComboBox.TabIndex = 3;
+            this.SongGroup2_Song2_ComboBox.TabIndex = 2; // Adjusted TabIndex
             this.SongGroup2_Song2_ComboBox.UseSelectable = true;
             //
             // SongGroup2_Timer1_Label
@@ -273,7 +313,7 @@ namespace BardSongHelper_WF
             this.SongGroup2_Timer1_Label.Location = new System.Drawing.Point(238, 24);
             this.SongGroup2_Timer1_Label.Name = "SongGroup2_Timer1_Label";
             this.SongGroup2_Timer1_Label.Size = new System.Drawing.Size(50, 23);
-            this.SongGroup2_Timer1_Label.TabIndex = 4;
+            this.SongGroup2_Timer1_Label.TabIndex = 3; // Adjusted TabIndex
             this.SongGroup2_Timer1_Label.Text = "00:00";
             //
             // SongGroup2_Timer2_Label
@@ -281,7 +321,7 @@ namespace BardSongHelper_WF
             this.SongGroup2_Timer2_Label.Location = new System.Drawing.Point(238, 60);
             this.SongGroup2_Timer2_Label.Name = "SongGroup2_Timer2_Label";
             this.SongGroup2_Timer2_Label.Size = new System.Drawing.Size(50, 23);
-            this.SongGroup2_Timer2_Label.TabIndex = 5;
+            this.SongGroup2_Timer2_Label.TabIndex = 4; // Adjusted TabIndex
             this.SongGroup2_Timer2_Label.Text = "00:00";
             //
             // groupBoxPartyGroup2
@@ -387,12 +427,23 @@ namespace BardSongHelper_WF
             //
             // groupBox8
             //
+            this.labelSongDelay = new MetroFramework.Controls.MetroLabel();
+            this.textBoxSongDelay = new MetroFramework.Controls.MetroTextBox();
+
+            this.groupBox8.Controls.Add(this.labelSongDelay);
+            this.labelBardRotationSwitch = new MetroFramework.Controls.MetroLabel();
+            this.toggleBardRotationSwitch = new MetroFramework.Controls.MetroToggle();
+
+            this.groupBox8.Controls.Add(this.labelBardRotationSwitch);
+            this.groupBox8.Controls.Add(this.toggleBardRotationSwitch);
+            this.groupBox8.Controls.Add(this.labelSongDelay);
+            this.groupBox8.Controls.Add(this.textBoxSongDelay);
             this.groupBox8.Controls.Add(this.metroLabel5);
             this.groupBox8.Controls.Add(this.PauseOnZone_Switch);
             this.groupBox8.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox8.Location = new System.Drawing.Point(11, 496);
             this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Size = new System.Drawing.Size(233, 38);
+            this.groupBox8.Size = new System.Drawing.Size(233, 100); // Further increased height
             this.groupBox8.TabIndex = 10;
             this.groupBox8.TabStop = false;
             this.groupBox8.Text = " PROGRAM OPTIONS ";
@@ -404,7 +455,7 @@ namespace BardSongHelper_WF
             this.PauseOnZone_Switch.Location = new System.Drawing.Point(122, 13);
             this.PauseOnZone_Switch.Name = "PauseOnZone_Switch";
             this.PauseOnZone_Switch.Size = new System.Drawing.Size(50, 16);
-            this.PauseOnZone_Switch.TabIndex = 0;
+            this.PauseOnZone_Switch.TabIndex = 0; // Original TabIndex
             this.PauseOnZone_Switch.Text = "Off";
             this.PauseOnZone_Switch.UseSelectable = true;
             //
@@ -414,8 +465,66 @@ namespace BardSongHelper_WF
             this.metroLabel5.Location = new System.Drawing.Point(6, 13);
             this.metroLabel5.Name = "metroLabel5";
             this.metroLabel5.Size = new System.Drawing.Size(95, 19);
-            this.metroLabel5.TabIndex = 1;
+            this.metroLabel5.TabIndex = 1; // Original TabIndex
             this.metroLabel5.Text = "Pause on Zone";
+
+            //
+            // labelSongDelay
+            //
+            this.labelSongDelay.AutoSize = true;
+            this.labelSongDelay.Location = new System.Drawing.Point(6, 40); // Placed on a new line
+            this.labelSongDelay.Name = "labelSongDelay";
+            this.labelSongDelay.TabIndex = 2; // Next TabIndex
+            this.labelSongDelay.Text = "Song Delay (s):";
+            //
+            // textBoxSongDelay
+            //
+            this.textBoxSongDelay.CustomButton.Image = null;
+            this.textBoxSongDelay.CustomButton.Location = new System.Drawing.Point(28, 1);
+            this.textBoxSongDelay.CustomButton.Name = "";
+            this.textBoxSongDelay.CustomButton.Size = new System.Drawing.Size(21, 21);
+            this.textBoxSongDelay.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
+            this.textBoxSongDelay.CustomButton.TabIndex = 1;
+            this.textBoxSongDelay.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
+            this.textBoxSongDelay.CustomButton.UseSelectable = true;
+            this.textBoxSongDelay.CustomButton.Visible = false;
+            this.textBoxSongDelay.Lines = new string[] { "1" };
+            this.textBoxSongDelay.Location = new System.Drawing.Point(122, 40); // Next to labelSongDelay
+            this.textBoxSongDelay.MaxLength = 3;
+            this.textBoxSongDelay.Name = "textBoxSongDelay";
+            this.textBoxSongDelay.PasswordChar = '\0';
+            this.textBoxSongDelay.ScrollBars = System.Windows.Forms.ScrollBars.None;
+            this.textBoxSongDelay.SelectedText = "";
+            this.textBoxSongDelay.SelectionLength = 0;
+            this.textBoxSongDelay.SelectionStart = 0;
+            this.textBoxSongDelay.ShortcutsEnabled = true;
+            this.textBoxSongDelay.Size = new System.Drawing.Size(50, 23);
+            this.textBoxSongDelay.TabIndex = 3; // Original TabIndex for this row
+            this.textBoxSongDelay.Text = "1";
+            this.textBoxSongDelay.UseSelectable = true;
+            this.textBoxSongDelay.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
+            this.textBoxSongDelay.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
+            this.textBoxSongDelay.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBoxSongDelay_KeyPress);
+            //
+            // labelBardRotationSwitch
+            //
+            this.labelBardRotationSwitch.AutoSize = true;
+            this.labelBardRotationSwitch.Location = new System.Drawing.Point(6, 67); // New row
+            this.labelBardRotationSwitch.Name = "labelBardRotationSwitch";
+            this.labelBardRotationSwitch.TabIndex = 4; // Next TabIndex
+            this.labelBardRotationSwitch.Text = "Bard Rotation:";
+            //
+            // toggleBardRotationSwitch
+            //
+            this.toggleBardRotationSwitch.AutoSize = true;
+            this.toggleBardRotationSwitch.Location = new System.Drawing.Point(122, 67); // Next to labelBardRotationSwitch
+            this.toggleBardRotationSwitch.Name = "toggleBardRotationSwitch";
+            this.toggleBardRotationSwitch.Size = new System.Drawing.Size(80, 17);
+            this.toggleBardRotationSwitch.TabIndex = 5; // Next TabIndex
+            this.toggleBardRotationSwitch.Text = "Off";
+            this.toggleBardRotationSwitch.UseSelectable = true;
+            this.toggleBardRotationSwitch.Checked = false;
+            this.toggleBardRotationSwitch.CheckedChanged += new System.EventHandler(this.toggleBardRotationSwitch_CheckedChanged);
             //
             // PauseTimersChecks
             //
@@ -558,5 +667,12 @@ namespace BardSongHelper_WF
         private MetroFramework.Controls.MetroTextBox FollowerTargetGroup2;
         private System.Windows.Forms.Label labelFollowerTargetGroup2Clear;
         private MetroFramework.Controls.MetroButton buttonToggleManualFollow;
+        private MetroFramework.Controls.MetroToggle toggleGroup2Switch;
+        private MetroFramework.Controls.MetroLabel labelSongDelay;
+        private MetroFramework.Controls.MetroTextBox textBoxSongDelay;
+        private MetroFramework.Controls.MetroToggle toggleSoulVoiceSwitch;
+        private MetroFramework.Controls.MetroLabel labelSoulVoice;
+        private MetroFramework.Controls.MetroLabel labelBardRotationSwitch;
+        private MetroFramework.Controls.MetroToggle toggleBardRotationSwitch;
     }
 }
