@@ -115,12 +115,15 @@ namespace BardSongHelper_WF
 
         // public int SongProcessActiveForGroup = 0; // Removed
         private int currentFollowTargetGroup = 1; // Added for Group 2 Follow Target
+        private bool manualFollowActive = false;
+        private string manualFollowTargetName = "";
 
         #endregion
 
         public Form1()
         {
             InitializeComponent();
+            this.ShadowType = MetroFramework.Forms.MetroFormShadowType.None;
 
             // Removed: RollOne_ComboBox.SelectedIndex = 3;
             // Removed: RollTwo_ComboBox.SelectedIndex = 10;
@@ -283,9 +286,9 @@ namespace BardSongHelper_WF
             {
                 timerBusy = true;
 
-                if (botRunning == true && !knownCities.Contains(_api.Player.ZoneId) && isMoving == false)
+                if (botRunning == true && !knownCities.Contains(_api.Player.ZoneId) && isMoving == false && manualFollowActive == false)
                 {
-                    // Determine which follow target to use
+                    // Determine which follow target to use for automated song cycle following
                     if (currentFollowTargetGroup == 1)
                     {
                         await FollowTargetAsync(FollowerTarget.Text);
@@ -363,6 +366,7 @@ namespace BardSongHelper_WF
 
             if (followID == 0)
             {
+                 // Don't show a message here, as this is part of the automated loop
                 return;
             }
 
@@ -372,6 +376,8 @@ namespace BardSongHelper_WF
             isMoving = true;
             while (Math.Truncate(FollowedCharacter.Distance) >= (float)6)
             {
+                if (manualFollowActive) break; // Stop if manual follow took over
+
                 _api.AutoFollow.SetAutoFollowCoords(FollowedCharacter.X - PlayerCharacter.X,
                                                    FollowedCharacter.Y - PlayerCharacter.Y,
                                                    FollowedCharacter.Z - PlayerCharacter.Z);
@@ -379,15 +385,44 @@ namespace BardSongHelper_WF
                 _api.AutoFollow.IsAutoFollowing = true;
 
                 await Task.Delay(TimeSpan.FromSeconds(0.1));
+                 if (manualFollowActive) break;
             }
-            _api.AutoFollow.IsAutoFollowing = false;
-            isMoving = false;
-
+             if (!manualFollowActive) // Only turn off if this wasn't interrupted by manual follow
+            {
+                _api.AutoFollow.IsAutoFollowing = false;
+                isMoving = false;
+            }
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _api = null;
+            this.ShadowType = MetroFramework.Forms.MetroFormShadowType.None;
+
+            // Stop and Dispose timers
+            if (Song_Timer != null)
+            {
+                Song_Timer.Stop();
+                Song_Timer.Dispose();
+            }
+            if (PauseTimersChecks != null)
+            {
+                PauseTimersChecks.Stop();
+                PauseTimersChecks.Dispose();
+            }
+
+            // API cleanup
+            if (_api != null)
+            {
+                if (_api is IDisposable disposableApi)
+                {
+                    disposableApi.Dispose();
+                }
+                _api = null;
+            }
+
+            // Force the application to exit if it hasn't already.
+            // This should be one of the very last things.
+            Application.Exit();
         }
 
         #region "DISTANCE CHECKER"
@@ -741,6 +776,101 @@ namespace BardSongHelper_WF
         {
             FollowerTargetGroup2.Text = string.Empty;
         }
+
+        private void buttonToggleManualFollow_Click(object sender, EventArgs e)
+        {
+            if (_api == null || _api.Player.LoginStatus != (int)LoginStatus.LoggedIn)
+            {
+                MetroMessageBox.Show(this, "Please select a POL process first.", "API Not Ready", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!manualFollowActive) // If we are not currently manually following, try to start.
+            {
+                string targetToFollow = "";
+                // Determine target based on currentFollowTargetGroup or fallback
+                if (currentFollowTargetGroup == 1 && !string.IsNullOrWhiteSpace(FollowerTarget.Text) && FollowerTarget.Text != "Follower target name.")
+                {
+                    targetToFollow = FollowerTarget.Text;
+                }
+                else if (currentFollowTargetGroup == 2 && !string.IsNullOrWhiteSpace(FollowerTargetGroup2.Text) && FollowerTargetGroup2.Text != "Follower target G2 name.")
+                {
+                    targetToFollow = FollowerTargetGroup2.Text;
+                }
+                // Fallback logic if current group's target is empty
+                else if (!string.IsNullOrWhiteSpace(FollowerTarget.Text) && FollowerTarget.Text != "Follower target name.")
+                {
+                     targetToFollow = FollowerTarget.Text;
+                }
+                else if (!string.IsNullOrWhiteSpace(FollowerTargetGroup2.Text) && FollowerTargetGroup2.Text != "Follower target G2 name.")
+                {
+                    targetToFollow = FollowerTargetGroup2.Text;
+                }
+
+                if (!string.IsNullOrWhiteSpace(targetToFollow))
+                {
+                    // Verify target exists before attempting to follow
+                    uint tempTargetId = GetTargetIdByName(targetToFollow);
+                    if (tempTargetId == 0)
+                    {
+                        MetroMessageBox.Show(this, $"Target '{targetToFollow}' not found in the current zone.", "Target Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return; // Do not proceed if target not found
+                    }
+
+                    _api.ThirdParty.SendString($"/follow \"{targetToFollow}\"");
+                    // If a brief delay was beneficial, it could be added here if this method becomes async
+                    // await Task.Delay(300);
+
+                    // Set API flags to reflect that the bot considers itself to be in a follow state.
+                    // These flags are important if other parts of the bot's logic (like the song cycle's own follow check)
+                    // depend on them, or if the user's original "unfollow was working fine" means these flags + text command were the combo.
+                    _api.AutoFollow.IsAutoFollowing = true;
+                    isMoving = true;
+
+                    manualFollowTargetName = targetToFollow;
+                    manualFollowActive = true;
+                    if (buttonToggleManualFollow.InvokeRequired) {
+                        buttonToggleManualFollow.Invoke(new MethodInvoker(delegate { buttonToggleManualFollow.Text = "Unfollow"; }));
+                    } else {
+                        buttonToggleManualFollow.Text = "Unfollow";
+                    }
+                }
+                else
+                {
+                    MetroMessageBox.Show(this, "No valid target name entered in either follow field.", "No Target", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            else // manualFollowActive is true, so stop following.
+            {
+                _api.ThirdParty.SendString("/follow"); // Placeholder for actual stop follow command.
+
+                // Reset API/bot state variables, consistent with original interpretation of "unfollow was working"
+                _api.AutoFollow.IsAutoFollowing = false;
+                isMoving = false;
+
+                // Clear the UI field that was used for manual follow
+                if (!string.IsNullOrEmpty(manualFollowTargetName))
+                {
+                    if (FollowerTarget.Text == manualFollowTargetName)
+                    {
+                        FollowerTarget.Text = "Follower target name."; // Reset to placeholder
+                    }
+                    else if (FollowerTargetGroup2.Text == manualFollowTargetName)
+                    {
+                        FollowerTargetGroup2.Text = "Follower target G2 name."; // Reset to placeholder
+                    }
+                }
+                manualFollowTargetName = "";
+                manualFollowActive = false;
+                if (buttonToggleManualFollow.InvokeRequired) {
+                    buttonToggleManualFollow.Invoke(new MethodInvoker(delegate { buttonToggleManualFollow.Text = "Follow Current Target"; }));
+                } else {
+                    buttonToggleManualFollow.Text = "Follow Current Target";
+                }
+            }
+        }
+
+        // StartBotFollow and StopBotFollow methods would be here if not deleted in this step.
 
         private void PauseTimersChecks_Tick(object sender, EventArgs e)
         {

@@ -62,6 +62,7 @@ namespace BardSongHelper_WF
             this.groupBoxBardOptionsGroup2 = new System.Windows.Forms.GroupBox();
             this.FollowerTargetGroup2 = new MetroFramework.Controls.MetroTextBox();
             this.labelFollowerTargetGroup2Clear = new System.Windows.Forms.Label();
+            this.buttonToggleManualFollow = new MetroFramework.Controls.MetroButton(); // Added declaration
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -432,7 +433,7 @@ namespace BardSongHelper_WF
             this.groupBoxBardOptionsGroup2.Size = new System.Drawing.Size(239, 80);
             this.groupBoxBardOptionsGroup2.TabIndex = 13;
             this.groupBoxBardOptionsGroup2.TabStop = false;
-            this.groupBoxBardOptionsGroup2.Text = " BARD OPTIONS (Group 2) ";
+            this.groupBoxBardOptionsGroup2.Text = " FOLLOW TARGET (Group 2) ";
             //
             // FollowerTargetGroup2
             //
@@ -473,11 +474,22 @@ namespace BardSongHelper_WF
             this.labelFollowerTargetGroup2Clear.Text = "X";
             this.labelFollowerTargetGroup2Clear.Click += new System.EventHandler(this.labelFollowerTargetGroup2Clear_Click);
             //
+            // buttonToggleManualFollow
+            //
+            this.buttonToggleManualFollow.Location = new System.Drawing.Point(245, 589);
+            this.buttonToggleManualFollow.Name = "buttonToggleManualFollow";
+            this.buttonToggleManualFollow.Size = new System.Drawing.Size(163, 35);
+            this.buttonToggleManualFollow.TabIndex = 14; // Assuming 13 was last used by groupBoxBardOptionsGroup2
+            this.buttonToggleManualFollow.Text = "Follow Current Target";
+            this.buttonToggleManualFollow.UseSelectable = true;
+            this.buttonToggleManualFollow.Click += new System.EventHandler(this.buttonToggleManualFollow_Click);
+            //
             // Form1
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(480, 603);
+            this.ClientSize = new System.Drawing.Size(480, 644); // Adjusted ClientSize
+            this.Controls.Add(this.buttonToggleManualFollow); // Added control
             this.Controls.Add(this.groupBoxBardOptionsGroup2);
             this.Controls.Add(this.groupBoxPartyGroup2);
             this.Controls.Add(this.groupBoxSongGroup2);
@@ -545,5 +557,6 @@ namespace BardSongHelper_WF
         private System.Windows.Forms.GroupBox groupBoxBardOptionsGroup2;
         private MetroFramework.Controls.MetroTextBox FollowerTargetGroup2;
         private System.Windows.Forms.Label labelFollowerTargetGroup2Clear;
+        private MetroFramework.Controls.MetroButton buttonToggleManualFollow;
     }
 }
