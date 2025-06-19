@@ -392,8 +392,9 @@ namespace BardSongHelper_WF
             {
                 timerBusy = true;
 
-                // --- Auto-join logic during bard rotation ---
-                if (isBardRotationActive && _api != null && _api.Player.LoginStatus == (int)LoginStatus.LoggedIn)
+                // --- Auto-join logic ---
+                // Now governed by the toggleAutoJoinSwitch
+                if (toggleAutoJoinSwitch.Checked && _api != null && _api.Player.LoginStatus == (int)LoginStatus.LoggedIn)
                 {
                     EliteAPI.ChatEntry chatLine = _api.Chat.GetNextChatLine();
                     while (chatLine != null)
@@ -1088,6 +1089,16 @@ namespace BardSongHelper_WF
                     return;
                 }
 
+                // Set the Auto Join toggle to ON
+                if (toggleAutoJoinSwitch.InvokeRequired)
+                {
+                    toggleAutoJoinSwitch.Invoke(new MethodInvoker(delegate { toggleAutoJoinSwitch.Checked = true; }));
+                }
+                else
+                {
+                    toggleAutoJoinSwitch.Checked = true;
+                }
+
                 isBardRotationActive = true;
                 bardRotationCancellationTokenSource = new CancellationTokenSource();
                 // ActivityButton.Enabled = false; // Optional: disable manual start/stop
@@ -1131,36 +1142,37 @@ namespace BardSongHelper_WF
         private async Task ExecuteBardRotation(CancellationToken cancellationToken)
         {
             // Helper function to send command and delay
-            async Task SendCommand(string command, int delayMs = 1000)
+            async Task SendCommand(string command, CancellationToken ct, int delayMs = 1000) // Added CancellationToken
             {
-                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                if (ct.IsCancellationRequested) ct.ThrowIfCancellationRequested();
                 _api.ThirdParty.SendString(command);
-                await Task.Delay(delayMs, cancellationToken);
+                await Task.Delay(delayMs, ct);
             }
 
             // Helper function to play songs for a group
-            async Task PlaySongsForGroup(int groupNum, string followTargetName, List<SongData> songsToPlay, List<PartyRequirements> partyMembers)
+            async Task PlaySongsForGroup(int groupNum, string followTargetName, List<SongData> songsToPlay, List<PartyRequirements> partyMembers, CancellationToken ct) // Added CancellationToken
             {
-                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                if (ct.IsCancellationRequested) ct.ThrowIfCancellationRequested();
 
                 if (!string.IsNullOrWhiteSpace(followTargetName) && followTargetName != "Follower target name." && followTargetName != "Follower target G2 name.")
                 {
-                    await SendCommand($"/follow \"{followTargetName}\"");
-                    await Task.Delay(3000, cancellationToken);
+                    await SendCommand($"/follow \"{followTargetName}\"", ct, 1000); // Pass token
+                    await Task.Delay(3000, ct);
                 }
 
-                // Check party status. Auto-join should be active via Song_Timer_TickAsync.
-                await Task.Delay(2000, cancellationToken); // Wait 2s for potential auto-join to occur
-
-                if (_api.Party.GetPartyMembers() == null || _api.Party.GetPartyMembers().Count <= 1)
+                // Simplified party check - ExecuteBardRotation should ensure we are in a party.
+                // Adding a small delay for safety for game state to update.
+                await Task.Delay(1000, ct);
+                var currentPartyInfo = _api.Party.GetPartyMembers();
+                if (currentPartyInfo == null || currentPartyInfo.Count <= 1)
                 {
-                    // If still not in party, try a direct /join
-                    await SendCommand("/join", 1500);
-                    await Task.Delay(2000, cancellationToken); // Wait for join to process
-
-                    if (_api.Party.GetPartyMembers() == null || _api.Party.GetPartyMembers().Count <= 1)
+                    // Try one more time to join, in case invite came late or auto-join from timer didn't catch it.
+                    await SendCommand("/join", ct, 1500);
+                    await Task.Delay(2000, ct); // Wait for join to process
+                    currentPartyInfo = _api.Party.GetPartyMembers(); // Re-check
+                    if (currentPartyInfo == null || currentPartyInfo.Count <= 1)
                     {
-                        MetroMessageBox.Show(this, $"Bard Rotation (Group {groupNum}): Failed to join a party. Aborting group.", "Party Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MetroMessageBox.Show(this, $"Bard Rotation (Group {groupNum}): Not in a party when songs were expected to start. Aborting group.", "Party Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
                 }
@@ -1170,19 +1182,17 @@ namespace BardSongHelper_WF
                 foreach (var song in songsToPlay)
                 {
                     if (song == null) continue;
-                    if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                    if (ct.IsCancellationRequested) ct.ThrowIfCancellationRequested();
 
-                    // Announce song to party chat
-                    await SendCommand($"/p Now playing: {song.SongName}!", 1500);
+                    await SendCommand($"/p Now playing: {song.SongName}!", ct, 1500); // Pass token
                     _api.ThirdParty.SendString($"/ma \"{song.SongName}\" <me>");
 
-                    // THIS IS THE MODIFIED DELAY:
                     int songPlayDuration = GetSongDelaySeconds();
-                    await Task.Delay(songPlayDuration * 1000, cancellationToken);
+                    await Task.Delay(songPlayDuration * 1000, ct); // Pass token
                 }
 
-                await SendCommand($"/p Bard Rotation: Group {groupNum} songs complete. Leaving party.", 1500); // Updated announcement
-                await SendCommand("/pcmd leave", 2000); // Changed command
+                await SendCommand($"/p Bard Rotation: Group {groupNum} songs complete. Leaving party.", ct, 1500);
+                await SendCommand("/pcmd leave", ct, 2000);
             }
 
             // --- Rotation Start ---
@@ -1194,12 +1204,56 @@ namespace BardSongHelper_WF
                 Songs.FirstOrDefault(s => s.Position == SongGroup1_Song1_ComboBox.SelectedIndex),
                 Songs.FirstOrDefault(s => s.Position == SongGroup1_Song2_ComboBox.SelectedIndex)
             };
-            await PlaySongsForGroup(1, FollowerTarget.Text, group1Songs, Member_List_Group1);
+            await PlaySongsForGroup(1, FollowerTarget.Text, group1Songs, Member_List_Group1, cancellationToken); // Pass token
             if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
 
-            MetroMessageBox.Show(this, "Bard Rotation: Group 1 complete. Waiting for new party invite for Group 2 (auto-join is active).", "Rotation Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            await Task.Delay(5000, cancellationToken); // Shortened wait
-            if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+            // Add "Confirm Not in Party Loop"
+            MetroMessageBox.Show(this, "Bard Rotation: Group 1 songs complete, ensuring party is left...", "Rotation Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            bool leftPreviousParty = false;
+            for (int i = 0; i < 15; i++) // Max ~15 seconds wait
+            {
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                var partyInfo = _api.Party.GetPartyMembers();
+                if (partyInfo == null || partyInfo.Count <= 1) // Should be solo
+                {
+                    leftPreviousParty = true;
+                    MetroMessageBox.Show(this, "Bard Rotation: Confirmed left previous party.", "Rotation Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    break;
+                }
+                await Task.Delay(1000, cancellationToken);
+            }
+
+            if (!leftPreviousParty)
+            {
+                MetroMessageBox.Show(this, "Bard Rotation: Failed to confirm leaving previous party. Aborting rotation.", "Rotation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                cancellationToken.ThrowIfCancellationRequested();
+                return;
+            }
+
+            // Replace fixed delay with "Wait for New Party (Group 2) Loop"
+            MetroMessageBox.Show(this, "Bard Rotation: Waiting for new party invite for Group 2 (auto-join is active). Timeout in approx 90s.", "Rotation Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            bool joinedGroup2Party = false;
+            for (int i = 0; i < 60; i++) // Max 60 * 1.5s = 90 seconds wait
+            {
+                if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+                var partyInfo = _api.Party.GetPartyMembers();
+                // Check if we are in a party with more than just ourselves
+                if (partyInfo != null && partyInfo.Count > 1)
+                {
+                    joinedGroup2Party = true;
+                    MetroMessageBox.Show(this, "Bard Rotation: Detected new party for Group 2.", "Rotation Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await Task.Delay(1000, cancellationToken);
+                    break;
+                }
+                await Task.Delay(1500, cancellationToken);
+            }
+
+            if (!joinedGroup2Party)
+            {
+                MetroMessageBox.Show(this, "Bard Rotation: Timed out waiting for Group 2 party invite. Ending rotation.", "Rotation Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cancellationToken.ThrowIfCancellationRequested();
+                return;
+            }
 
             // GROUP 2
             if (!toggleGroup2Switch.Checked)
@@ -1212,11 +1266,27 @@ namespace BardSongHelper_WF
                     Songs.FirstOrDefault(s => s.Position == SongGroup2_Song1_ComboBox.SelectedIndex),
                     Songs.FirstOrDefault(s => s.Position == SongGroup2_Song2_ComboBox.SelectedIndex)
                 };
-                await PlaySongsForGroup(2, FollowerTargetGroup2.Text, group2Songs, Member_List_Group2);
+                await PlaySongsForGroup(2, FollowerTargetGroup2.Text, group2Songs, Member_List_Group2, cancellationToken); // Pass token
             }
 
             if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
             MetroMessageBox.Show(this, "Bard Rotation Finished.", "Rotation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void toggleAutoJoinSwitch_CheckedChanged(object sender, EventArgs e)
+        {
+            // Currently, no specific action is needed when this toggle changes,
+            // as its state is read directly in Song_Timer_TickAsync.
+            // This handler is here for completeness and future use if needed.
+            // Example: Could add logging here if desired:
+            // if (toggleAutoJoinSwitch.Checked)
+            // {
+            //     Console.WriteLine("Auto Join on Invite: Enabled by user.");
+            // }
+            // else
+            // {
+            //     Console.WriteLine("Auto Join on Invite: Disabled by user.");
+            // }
         }
     }
 }

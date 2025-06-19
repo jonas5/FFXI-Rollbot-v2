@@ -437,13 +437,21 @@ namespace BardSongHelper_WF
             this.groupBox8.Controls.Add(this.labelBardRotationSwitch);
             this.groupBox8.Controls.Add(this.toggleBardRotationSwitch);
             this.groupBox8.Controls.Add(this.labelSongDelay);
+            this.labelAutoJoin = new MetroFramework.Controls.MetroLabel();
+            this.toggleAutoJoinSwitch = new MetroFramework.Controls.MetroToggle();
+
+            this.groupBox8.Controls.Add(this.labelAutoJoin);
+            this.groupBox8.Controls.Add(this.toggleAutoJoinSwitch);
+            this.groupBox8.Controls.Add(this.labelBardRotationSwitch);
+            this.groupBox8.Controls.Add(this.toggleBardRotationSwitch);
+            this.groupBox8.Controls.Add(this.labelSongDelay);
             this.groupBox8.Controls.Add(this.textBoxSongDelay);
             this.groupBox8.Controls.Add(this.metroLabel5);
             this.groupBox8.Controls.Add(this.PauseOnZone_Switch);
             this.groupBox8.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox8.Location = new System.Drawing.Point(11, 496);
             this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Size = new System.Drawing.Size(233, 100); // Further increased height
+            this.groupBox8.Size = new System.Drawing.Size(233, 125); // Adjusted height
             this.groupBox8.TabIndex = 10;
             this.groupBox8.TabStop = false;
             this.groupBox8.Text = " PROGRAM OPTIONS ";
@@ -488,7 +496,7 @@ namespace BardSongHelper_WF
             this.textBoxSongDelay.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
             this.textBoxSongDelay.CustomButton.UseSelectable = true;
             this.textBoxSongDelay.CustomButton.Visible = false;
-            this.textBoxSongDelay.Lines = new string[] { "1" };
+            this.textBoxSongDelay.Lines = new string[] { "10" }; // MODIFIED
             this.textBoxSongDelay.Location = new System.Drawing.Point(122, 40); // Next to labelSongDelay
             this.textBoxSongDelay.MaxLength = 3;
             this.textBoxSongDelay.Name = "textBoxSongDelay";
@@ -500,7 +508,7 @@ namespace BardSongHelper_WF
             this.textBoxSongDelay.ShortcutsEnabled = true;
             this.textBoxSongDelay.Size = new System.Drawing.Size(50, 23);
             this.textBoxSongDelay.TabIndex = 3; // Original TabIndex for this row
-            this.textBoxSongDelay.Text = "1";
+            this.textBoxSongDelay.Text = "10"; // MODIFIED
             this.textBoxSongDelay.UseSelectable = true;
             this.textBoxSongDelay.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
             this.textBoxSongDelay.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
@@ -525,6 +533,26 @@ namespace BardSongHelper_WF
             this.toggleBardRotationSwitch.UseSelectable = true;
             this.toggleBardRotationSwitch.Checked = false;
             this.toggleBardRotationSwitch.CheckedChanged += new System.EventHandler(this.toggleBardRotationSwitch_CheckedChanged);
+            //
+            // labelAutoJoin
+            //
+            this.labelAutoJoin.AutoSize = true;
+            this.labelAutoJoin.Location = new System.Drawing.Point(6, 91); // New Y for new row
+            this.labelAutoJoin.Name = "labelAutoJoin";
+            this.labelAutoJoin.TabIndex = 6; // Following toggleBardRotationSwitch
+            this.labelAutoJoin.Text = "Auto Join on Invite:";
+            //
+            // toggleAutoJoinSwitch
+            //
+            this.toggleAutoJoinSwitch.AutoSize = true;
+            this.toggleAutoJoinSwitch.Location = new System.Drawing.Point(122, 91); // New Y, aligned X
+            this.toggleAutoJoinSwitch.Name = "toggleAutoJoinSwitch";
+            this.toggleAutoJoinSwitch.Size = new System.Drawing.Size(80, 17);
+            this.toggleAutoJoinSwitch.TabIndex = 7; // Following labelAutoJoin
+            this.toggleAutoJoinSwitch.Text = "Off";
+            this.toggleAutoJoinSwitch.UseSelectable = true;
+            this.toggleAutoJoinSwitch.Checked = false; // Default to Off
+            this.toggleAutoJoinSwitch.CheckedChanged += new System.EventHandler(this.toggleAutoJoinSwitch_CheckedChanged);
             //
             // PauseTimersChecks
             //
@@ -674,5 +702,7 @@ namespace BardSongHelper_WF
         private MetroFramework.Controls.MetroLabel labelSoulVoice;
         private MetroFramework.Controls.MetroLabel labelBardRotationSwitch;
         private MetroFramework.Controls.MetroToggle toggleBardRotationSwitch;
+        private MetroFramework.Controls.MetroLabel labelAutoJoin;
+        private MetroFramework.Controls.MetroToggle toggleAutoJoinSwitch;
     }
 }
