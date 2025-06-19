@@ -399,6 +399,7 @@ namespace CorsairRollBot_WF
 
                 if (pol.Length < 1)
                 {
+                    Debug.WriteLine("No POL instances found in Form1 constructor.");
                     MetroMessageBox.Show(this, "No POL instances were able to be located." + "\n\n" +
                         "Please note: If you use a private server make sure the program used to access it has been renamed to POL " +
                         "otherwise this bot will not be able to locate it.", "Notice:", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -459,9 +460,10 @@ namespace CorsairRollBot_WF
 
         private void Select_POLID_Click(object sender, EventArgs e)
         {
-
+            Debug.WriteLine($"Selected POLID: {POLID.SelectedItem}, Process ID: {processids.SelectedItem}");
             processids.SelectedIndex = POLID.SelectedIndex;
             _api = new EliteAPI((int)processids.SelectedItem);
+            Debug.WriteLine(_api == null ? "_api is null after instantiation." : "_api instantiated successfully.");
             Select_POLID.Text = "SELECTED";
             Select_POLID.BackColor = Color.Green;
 
@@ -479,9 +481,11 @@ namespace CorsairRollBot_WF
                     }
                 }
             }
+            Debug.WriteLine($"WindowerMode determined: {WindowerMode}");
 
             if (firstSelect == false)
             {
+                Debug.WriteLine("Entering firstSelect == false block.");
 
                 EliteAPI.ChatEntry cl = _api.Chat.GetNextChatLine();
                 while (cl != null)
@@ -489,23 +493,20 @@ namespace CorsairRollBot_WF
                     cl = _api.Chat.GetNextChatLine();
                 }
 
-                if (WindowerMode == "Windower")
-                {
-                    _api.ThirdParty.SendString("//lua load crb_addon");
-                }
-                else if (WindowerMode == "Ashita")
-                {
-                    _api.ThirdParty.SendString("/addon load crb_addon");
-                }
+                string commandToSend = WindowerMode == "Windower" ? "//lua load crb_addon" : "/addon load crb_addon";
+                Debug.WriteLine($"Sending command: {commandToSend}");
+                _api.ThirdParty.SendString(commandToSend);
 
 
+                Debug.WriteLine("Calling AddonReader.RunWorkerAsync().");
                 AddonReader.RunWorkerAsync();
 
-
+                Debug.WriteLine("Calling GrabParty().");
                 GrabParty();
 
                 firstSelect = true;
             }
+            Debug.WriteLine($"firstSelect value after block: {firstSelect}");
         }
 
         #endregion "A POLID was selected so create an API instance and run the Addon"
@@ -1022,24 +1023,48 @@ namespace CorsairRollBot_WF
             // IF IN A PARTY THEN SET EACH CHECKBOX FIELD AS ENABLED AND POSSIBLE TO CHECK WITH THE
             // PT MEMBERS NAME SHOWN
 
-            if (_api != null)
+            if (_api == null)
+            {
+                Debug.WriteLine("Error: _api is null in GrabParty()");
+                return;
+            }
+
+            try
             {
                 List<EliteAPI.PartyMember> PartyMembers = _api.Party.GetPartyMembers();
+                Debug.WriteLine($"Number of party members: {PartyMembers.Count()}");
 
                 PartyMembersRequired.Items.Clear();
+                Debug.WriteLine("PartyMembersRequired ListBox cleared.");
 
-                if (PartyMembers.Count() > 1)
+                if (PartyMembers.Count() == 0)
                 {
+                    Debug.WriteLine("No party members found.");
+                }
+                else if (PartyMembers.Count() > 1)
+                {
+                    Debug.WriteLine("Populating PartyMembersRequired ListBox...");
                     foreach (EliteAPI.PartyMember PT_Data in PartyMembers)
                     {
-                        if (PT_Data.Name != _api.Player.Name && !PartyMembersRequired.Items.Contains(PT_Data.Name) && PT_Data.Name != "" && PT_Data.Active >= 1)
+                        if (string.IsNullOrEmpty(PT_Data.Name))
                         {
+                            Debug.WriteLine($"Warning: PT_Data.Name is null or empty for a party member. Skipping.");
+                            continue;
+                        }
+
+                        if (PT_Data.Name != _api.Player.Name && !PartyMembersRequired.Items.Contains(PT_Data.Name) && PT_Data.Active >= 1)
+                        {
+                            Debug.WriteLine($"Adding to ListBox: {PT_Data.Name}");
                             PartyMembersRequired.Items.Add(PT_Data.Name);
                         }
                     }
-
+                    Debug.WriteLine($"Total items in PartyMembersRequired ListBox: {PartyMembersRequired.Items.Count}");
 
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Exception in GrabParty(): {ex.Message}");
             }
         }
 
@@ -1112,6 +1137,7 @@ namespace CorsairRollBot_WF
 
         private void ReloadParty_Click(object sender, EventArgs e)
         {
+            Debug.WriteLine("ReloadParty_Click event triggered.");
             GrabParty();
         }
 
