@@ -38,14 +38,20 @@ namespace BardSongHelper_WF
             this.SongGroup1_Timer1_Label = new System.Windows.Forms.Label();
             this.SongGroup1_Timer2_Label = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.groupBox7 = new System.Windows.Forms.GroupBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.FollowerTarget = new MetroFramework.Controls.MetroTextBox();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.SongStatus_Label = new System.Windows.Forms.Label();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.AddonActive = new System.Windows.Forms.Button();
             this.ActivityButton = new System.Windows.Forms.Button();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
             this.ReloadParty = new System.Windows.Forms.Button();
             this.PartyMembersGroup1_ListBox = new System.Windows.Forms.ListBox();
+            this.groupBox7 = new System.Windows.Forms.GroupBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.FollowerTarget = new MetroFramework.Controls.MetroTextBox();
             this.Song_Timer = new System.Windows.Forms.Timer(this.components);
+            this.Follow_Timer = new System.Windows.Forms.Timer(this.components);
+            this.AddonReader = new System.ComponentModel.BackgroundWorker();
             this.metroToolTip1 = new MetroFramework.Components.MetroToolTip();
             this.DEBUG = new System.Windows.Forms.Button();
             this.groupBox8 = new System.Windows.Forms.GroupBox();
@@ -59,18 +65,16 @@ namespace BardSongHelper_WF
             this.SongGroup2_Timer2_Label = new System.Windows.Forms.Label();
             this.groupBoxPartyGroup2 = new System.Windows.Forms.GroupBox();
             this.PartyMembersGroup2_ListBox = new System.Windows.Forms.ListBox();
-            this.groupBoxBardOptionsGroup2 = new System.Windows.Forms.GroupBox();
-            this.FollowerTargetGroup2 = new MetroFramework.Controls.MetroTextBox();
-            this.labelFollowerTargetGroup2Clear = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            this.groupBox4.SuspendLayout();
+            this.groupBox5.SuspendLayout();
             this.groupBox6.SuspendLayout();
             this.groupBox7.SuspendLayout();
             this.groupBox8.SuspendLayout();
             this.groupBoxSongGroup2.SuspendLayout();
             this.groupBoxPartyGroup2.SuspendLayout();
-            this.groupBoxBardOptionsGroup2.SuspendLayout();
             this.SuspendLayout();
 
 
@@ -171,65 +175,13 @@ namespace BardSongHelper_WF
             //
             // groupBox3
             //
-            this.groupBox3.Controls.Add(this.groupBox7);
             this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox3.Location = new System.Drawing.Point(11, 224);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(239, 80);
+            this.groupBox3.Size = new System.Drawing.Size(239, 50);
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = " BARD OPTIONS (Group 1) ";
-            //
-            // groupBox7
-            //
-            this.groupBox7.Controls.Add(this.label1);
-            this.groupBox7.Controls.Add(this.FollowerTarget);
-            this.groupBox7.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox7.Location = new System.Drawing.Point(6, 19);
-            this.groupBox7.Name = "groupBox7";
-            this.groupBox7.Size = new System.Drawing.Size(163, 54);
-            this.groupBox7.TabIndex = 8;
-            this.groupBox7.TabStop = false;
-            this.groupBox7.Text = " FOLLOW TARGET ";
-            //
-            // label1
-            //
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(136, 24);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(15, 13);
-            this.label1.TabIndex = 7;
-            this.label1.Text = "X";
-            this.label1.Click += new System.EventHandler(this.label1_Click_1);
-            //
-            // FollowerTarget
-            //
-            this.FollowerTarget.CustomButton.Image = null;
-            this.FollowerTarget.CustomButton.Location = new System.Drawing.Point(129, 1);
-            this.FollowerTarget.CustomButton.Name = "";
-            this.FollowerTarget.CustomButton.Size = new System.Drawing.Size(21, 21);
-            this.FollowerTarget.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
-            this.FollowerTarget.CustomButton.TabIndex = 1;
-            this.FollowerTarget.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
-            this.FollowerTarget.CustomButton.UseSelectable = true;
-            this.FollowerTarget.CustomButton.Visible = false;
-            this.FollowerTarget.Lines = new string[] { "Follower target name." };
-            this.FollowerTarget.Location = new System.Drawing.Point(6, 19);
-            this.FollowerTarget.MaxLength = 32767;
-            this.FollowerTarget.Name = "FollowerTarget";
-            this.FollowerTarget.PasswordChar = '\0';
-            this.FollowerTarget.ScrollBars = System.Windows.Forms.ScrollBars.None;
-            this.FollowerTarget.SelectedText = "";
-            this.FollowerTarget.SelectionLength = 0;
-            this.FollowerTarget.SelectionStart = 0;
-            this.FollowerTarget.ShortcutsEnabled = true;
-            this.FollowerTarget.Size = new System.Drawing.Size(151, 23);
-            this.FollowerTarget.TabIndex = 6;
-            this.FollowerTarget.Text = "Follower target name.";
-            this.FollowerTarget.UseSelectable = true;
-            this.FollowerTarget.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
-            this.FollowerTarget.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
             //
             // groupBoxSongGroup2
             //
@@ -238,7 +190,7 @@ namespace BardSongHelper_WF
             this.groupBoxSongGroup2.Controls.Add(this.SongGroup2_Timer1_Label);
             this.groupBoxSongGroup2.Controls.Add(this.SongGroup2_Timer2_Label);
             this.groupBoxSongGroup2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBoxSongGroup2.Location = new System.Drawing.Point(11, 310);
+            this.groupBoxSongGroup2.Location = new System.Drawing.Point(11, 280);
             this.groupBoxSongGroup2.Name = "groupBoxSongGroup2";
             this.groupBoxSongGroup2.Size = new System.Drawing.Size(300, 94);
             this.groupBoxSongGroup2.TabIndex = 11;
@@ -285,7 +237,7 @@ namespace BardSongHelper_WF
             //
             // groupBoxPartyGroup2
             //
-            
+
             this.groupBoxPartyGroup2.Controls.Add(this.ReloadParty);
             this.groupBoxPartyGroup2.Controls.Add(this.PartyMembersGroup2_ListBox);
             this.groupBoxPartyGroup2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -334,13 +286,58 @@ namespace BardSongHelper_WF
             this.ReloadParty.Text = "reload";
             this.ReloadParty.UseVisualStyleBackColor = true;
             this.ReloadParty.Click += new System.EventHandler(this.ReloadParty_Click);
-            
-                        
+
+
+            //
+            // groupBox4
+            //
+            this.groupBox4.Controls.Add(this.SongStatus_Label);
+            this.groupBox4.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox4.Location = new System.Drawing.Point(11, 534); // Adjusted Y
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(106, 103);
+            this.groupBox4.TabIndex = 4;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = " SONG STATUS ";
+            //
+            // SongStatus_Label
+            //
+            this.SongStatus_Label.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SongStatus_Label.Location = new System.Drawing.Point(3, 15);
+            this.SongStatus_Label.Name = "SongStatus_Label";
+            this.SongStatus_Label.Size = new System.Drawing.Size(100, 85);
+            this.SongStatus_Label.TabIndex = 0;
+            this.SongStatus_Label.Text = "No songs active.";
+            this.SongStatus_Label.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+            //
+            // groupBox5
+            //
+            this.groupBox5.Controls.Add(this.AddonActive);
+            this.groupBox5.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox5.Location = new System.Drawing.Point(123, 534); // Adjusted Y
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(116, 103);
+            this.groupBox5.TabIndex = 5;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = " ADDON ACTIVE ";
+            this.metroToolTip1.SetToolTip(this.groupBox5, "Click this to send a request for verification.");
+            //
+            // AddonActive
+            //
+            this.AddonActive.Font = new System.Drawing.Font("Microsoft Sans Serif", 26.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.AddonActive.Location = new System.Drawing.Point(8, 20);
+            this.AddonActive.Name = "AddonActive";
+            this.AddonActive.Size = new System.Drawing.Size(100, 71);
+            this.AddonActive.TabIndex = 0;
+            this.AddonActive.Text = "NO";
+            this.metroToolTip1.SetToolTip(this.AddonActive, "Click this to send a request for verification.");
+            this.AddonActive.UseVisualStyleBackColor = true;
+            this.AddonActive.Click += new System.EventHandler(this.AddonActive_Click);
             //
             // ActivityButton
             //
             this.ActivityButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ActivityButton.Location = new System.Drawing.Point(245, 540);
+            this.ActivityButton.Location = new System.Drawing.Point(245, 594); // Adjusted Y
             this.ActivityButton.Name = "ActivityButton";
             this.ActivityButton.Size = new System.Drawing.Size(163, 43);
             this.ActivityButton.TabIndex = 6;
@@ -361,11 +358,69 @@ namespace BardSongHelper_WF
             this.PartyMembersGroup1_ListBox.TabIndex = 0;
             this.PartyMembersGroup1_ListBox.SelectedValueChanged += new System.EventHandler(this.PartyMembersGroup1_ListBox_SelectedValueChanged);
             //
+            // groupBox7
+            //
+            this.groupBox7.Controls.Add(this.label1);
+            this.groupBox7.Controls.Add(this.FollowerTarget);
+            this.groupBox7.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox7.Location = new System.Drawing.Point(245, 534); // Adjusted Y
+            this.groupBox7.Name = "groupBox7";
+            this.groupBox7.Size = new System.Drawing.Size(163, 54);
+            this.groupBox7.TabIndex = 8;
+            this.groupBox7.TabStop = false;
+            this.groupBox7.Text = " FOLLOW TARGET ";
+            //
+            // label1
+            //
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(136, 24);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(15, 13);
+            this.label1.TabIndex = 7;
+            this.label1.Text = "X";
+            this.label1.Click += new System.EventHandler(this.label1_Click_1);
+            //
+            // FollowerTarget
+            //
+            this.FollowerTarget.CustomButton.Image = null;
+            this.FollowerTarget.CustomButton.Location = new System.Drawing.Point(129, 1);
+            this.FollowerTarget.CustomButton.Name = "";
+            this.FollowerTarget.CustomButton.Size = new System.Drawing.Size(21, 21);
+            this.FollowerTarget.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
+            this.FollowerTarget.CustomButton.TabIndex = 1;
+            this.FollowerTarget.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
+            this.FollowerTarget.CustomButton.UseSelectable = true;
+            this.FollowerTarget.CustomButton.Visible = false;
+            this.FollowerTarget.Lines = new string[] { "Follower target name." };
+            this.FollowerTarget.Location = new System.Drawing.Point(6, 19);
+            this.FollowerTarget.MaxLength = 32767;
+            this.FollowerTarget.Name = "FollowerTarget";
+            this.FollowerTarget.PasswordChar = '\0';
+            this.FollowerTarget.ScrollBars = System.Windows.Forms.ScrollBars.None;
+            this.FollowerTarget.SelectedText = "";
+            this.FollowerTarget.SelectionLength = 0;
+            this.FollowerTarget.SelectionStart = 0;
+            this.FollowerTarget.ShortcutsEnabled = true;
+            this.FollowerTarget.Size = new System.Drawing.Size(151, 23);
+            this.FollowerTarget.TabIndex = 6;
+            this.FollowerTarget.Text = "Follower target name.";
+            this.FollowerTarget.UseSelectable = true;
+            this.FollowerTarget.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
+            this.FollowerTarget.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
+            //
             // Song_Timer
             //
             this.Song_Timer.Enabled = true;
             this.Song_Timer.Interval = 500;
             this.Song_Timer.Tick += new System.EventHandler(this.Song_Timer_TickAsync);
+            //
+            // AddonReader
+            //
+            this.AddonReader.WorkerReportsProgress = true;
+            this.AddonReader.WorkerSupportsCancellation = true;
+            this.AddonReader.DoWork += new System.ComponentModel.DoWorkEventHandler(this.AddonReader_DoWork);
+            this.AddonReader.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.AddonReader_RunWorkerCompleted);
             //
             // metroToolTip1
             //
@@ -389,7 +444,7 @@ namespace BardSongHelper_WF
             this.groupBox8.Controls.Add(this.metroLabel5);
             this.groupBox8.Controls.Add(this.PauseOnZone_Switch);
             this.groupBox8.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox8.Location = new System.Drawing.Point(11, 496);
+            this.groupBox8.Location = new System.Drawing.Point(11, 490); // Adjusted Y
             this.groupBox8.Name = "groupBox8";
             this.groupBox8.Size = new System.Drawing.Size(233, 38);
             this.groupBox8.TabIndex = 10;
@@ -422,69 +477,20 @@ namespace BardSongHelper_WF
             this.PauseTimersChecks.Interval = 500;
             this.PauseTimersChecks.Tick += new System.EventHandler(this.PauseTimersChecks_Tick);
             //
-            // groupBoxBardOptionsGroup2
-            //
-            this.groupBoxBardOptionsGroup2.Controls.Add(this.labelFollowerTargetGroup2Clear);
-            this.groupBoxBardOptionsGroup2.Controls.Add(this.FollowerTargetGroup2);
-            this.groupBoxBardOptionsGroup2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBoxBardOptionsGroup2.Location = new System.Drawing.Point(11, 410);
-            this.groupBoxBardOptionsGroup2.Name = "groupBoxBardOptionsGroup2";
-            this.groupBoxBardOptionsGroup2.Size = new System.Drawing.Size(239, 80);
-            this.groupBoxBardOptionsGroup2.TabIndex = 13;
-            this.groupBoxBardOptionsGroup2.TabStop = false;
-            this.groupBoxBardOptionsGroup2.Text = " BARD OPTIONS (Group 2) ";
-            //
-            // FollowerTargetGroup2
-            //
-            this.FollowerTargetGroup2.CustomButton.Image = null;
-            this.FollowerTargetGroup2.CustomButton.Location = new System.Drawing.Point(129, 1);
-            this.FollowerTargetGroup2.CustomButton.Name = "";
-            this.FollowerTargetGroup2.CustomButton.Size = new System.Drawing.Size(21, 21);
-            this.FollowerTargetGroup2.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
-            this.FollowerTargetGroup2.CustomButton.TabIndex = 1;
-            this.FollowerTargetGroup2.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
-            this.FollowerTargetGroup2.CustomButton.UseSelectable = true;
-            this.FollowerTargetGroup2.CustomButton.Visible = false;
-            this.FollowerTargetGroup2.Lines = new string[] { "Follower target G2 name." };
-            this.FollowerTargetGroup2.Location = new System.Drawing.Point(6, 19);
-            this.FollowerTargetGroup2.MaxLength = 32767;
-            this.FollowerTargetGroup2.Name = "FollowerTargetGroup2";
-            this.FollowerTargetGroup2.PasswordChar = '\0';
-            this.FollowerTargetGroup2.ScrollBars = System.Windows.Forms.ScrollBars.None;
-            this.FollowerTargetGroup2.SelectedText = "";
-            this.FollowerTargetGroup2.SelectionLength = 0;
-            this.FollowerTargetGroup2.SelectionStart = 0;
-            this.FollowerTargetGroup2.ShortcutsEnabled = true;
-            this.FollowerTargetGroup2.Size = new System.Drawing.Size(151, 23);
-            this.FollowerTargetGroup2.TabIndex = 6;
-            this.FollowerTargetGroup2.Text = "Follower target G2 name.";
-            this.FollowerTargetGroup2.UseSelectable = true;
-            this.FollowerTargetGroup2.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
-            this.FollowerTargetGroup2.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
-            //
-            // labelFollowerTargetGroup2Clear
-            //
-            this.labelFollowerTargetGroup2Clear.AutoSize = true;
-            this.labelFollowerTargetGroup2Clear.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelFollowerTargetGroup2Clear.Location = new System.Drawing.Point(160, 24); // Adjusted location
-            this.labelFollowerTargetGroup2Clear.Name = "labelFollowerTargetGroup2Clear";
-            this.labelFollowerTargetGroup2Clear.Size = new System.Drawing.Size(15, 13);
-            this.labelFollowerTargetGroup2Clear.TabIndex = 7;
-            this.labelFollowerTargetGroup2Clear.Text = "X";
-            this.labelFollowerTargetGroup2Clear.Click += new System.EventHandler(this.labelFollowerTargetGroup2Clear_Click);
-            //
             // Form1
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(480, 603);
-            this.Controls.Add(this.groupBoxBardOptionsGroup2);
+            this.ClientSize = new System.Drawing.Size(480, 683); // Adjusted ClientSize
             this.Controls.Add(this.groupBoxPartyGroup2);
             this.Controls.Add(this.groupBoxSongGroup2);
             this.Controls.Add(this.groupBox8);
             this.Controls.Add(this.DEBUG);
+            this.Controls.Add(this.groupBox7);
             this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.ActivityButton);
+            this.Controls.Add(this.groupBox5);
+            this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -497,6 +503,8 @@ namespace BardSongHelper_WF
             this.groupBox1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox5.ResumeLayout(false);
             this.groupBox6.ResumeLayout(false);
             this.groupBox7.ResumeLayout(false);
             this.groupBox7.PerformLayout();
@@ -504,8 +512,6 @@ namespace BardSongHelper_WF
             this.groupBox8.PerformLayout();
             this.groupBoxSongGroup2.ResumeLayout(false);
             this.groupBoxPartyGroup2.ResumeLayout(false);
-            this.groupBoxBardOptionsGroup2.ResumeLayout(false);
-            this.groupBoxBardOptionsGroup2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -515,6 +521,9 @@ namespace BardSongHelper_WF
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.Label SongStatus_Label;
+        private System.Windows.Forms.GroupBox groupBox5;
         private System.Windows.Forms.Button ActivityButton;
         private MetroFramework.Controls.MetroComboBox SongGroup1_Song2_ComboBox;
         private MetroFramework.Controls.MetroComboBox SongGroup1_Song1_ComboBox;
@@ -523,11 +532,17 @@ namespace BardSongHelper_WF
         private MetroFramework.Controls.MetroComboBox POLID;
         private System.Windows.Forms.Button Select_POLID;
         private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.GroupBox groupBox7;
         private System.Windows.Forms.Timer Song_Timer;
+        private System.Windows.Forms.Timer Follow_Timer;
+        private System.ComponentModel.BackgroundWorker AddonReader;
         private MetroFramework.Components.MetroToolTip metroToolTip1;
+        private System.Windows.Forms.Button AddonActive;
         private System.Windows.Forms.Button DEBUG;
         private System.Windows.Forms.ListBox PartyMembersGroup1_ListBox;
         private System.Windows.Forms.Button ReloadParty;
+        private System.Windows.Forms.Label label1;
+        private MetroFramework.Controls.MetroTextBox FollowerTarget;
         private System.Windows.Forms.GroupBox groupBox8;
         private MetroFramework.Controls.MetroLabel metroLabel5;
         private MetroFramework.Controls.MetroToggle PauseOnZone_Switch;
@@ -539,11 +554,5 @@ namespace BardSongHelper_WF
         private System.Windows.Forms.Label SongGroup2_Timer2_Label;
         private System.Windows.Forms.GroupBox groupBoxPartyGroup2;
         private System.Windows.Forms.ListBox PartyMembersGroup2_ListBox;
-        private MetroFramework.Controls.MetroTextBox FollowerTarget;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.GroupBox groupBox7;
-        private System.Windows.Forms.GroupBox groupBoxBardOptionsGroup2;
-        private MetroFramework.Controls.MetroTextBox FollowerTargetGroup2;
-        private System.Windows.Forms.Label labelFollowerTargetGroup2Clear;
     }
 }
