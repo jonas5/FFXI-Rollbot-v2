@@ -121,6 +121,7 @@ namespace BardSongHelper_WF
 
         private bool isBardRotationActive = false;
         private CancellationTokenSource bardRotationCancellationTokenSource;
+        private bool hasShownPartyWarningForProcessSongGroup = false;
 
         #endregion
 
@@ -202,7 +203,7 @@ namespace BardSongHelper_WF
 
             #endregion
 
-            this.Text = "Bard Song Helper v1.0"; // Added
+            this.Text = "Pocket Bard v1.0"; // Changed
             // Set initial state of Group 2 controls based on the toggle's default value
             toggleGroup2Switch_CheckedChanged(toggleGroup2Switch, EventArgs.Empty); 
             UpdatePolidButtonText(); // Call UpdatePolidButtonText as the last line
@@ -621,6 +622,37 @@ namespace BardSongHelper_WF
 
         #endregion
 
+        #region "CHECK IF PLAYER IS IN PARTY"
+
+        private bool IsPlayerInParty()
+        {
+            if (_api == null || _api.Player == null)
+            {
+                return false; // Or handle appropriately
+            }
+
+            var partyMembers = _api.Party.GetPartyMembers();
+            int otherActiveMembers = 0;
+
+            if (partyMembers != null && partyMembers.Count() > 0)
+            {
+                foreach (EliteAPI.PartyMember PT_Data in partyMembers)
+                {
+                    if (PT_Data != null &&
+                        !string.IsNullOrWhiteSpace(PT_Data.Name) &&
+                        PT_Data.Name != _api.Player.Name &&
+                        PT_Data.Active >= 1)
+                    {
+                        otherActiveMembers++;
+                    }
+                }
+            }
+
+            return otherActiveMembers > 0;
+        }
+
+        #endregion
+
         #region "PARTY MEMBER CHECKER TIMER"
 
 
@@ -724,6 +756,22 @@ namespace BardSongHelper_WF
         private async Task ProcessSongGroup(List<SongData> selectedSongs, List<PartyRequirements> targets, List<Label> uiTimerLabels, int groupNumber)
         {
             if (_api == null || !botRunning) return;
+
+            // Check if player is in a party with other active members
+            if (!IsPlayerInParty())
+            {
+                if (!hasShownPartyWarningForProcessSongGroup)
+                {
+                    MetroMessageBox.Show(this, "You must be in a party with at least one other active member to play songs for the current song group. Songs will not be played until you are in a valid party.", "Party Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    hasShownPartyWarningForProcessSongGroup = true;
+                }
+                return; // Still return early
+            }
+            else
+            {
+                // If player is in a party, reset the flag so they get notified again if they leave party later.
+                hasShownPartyWarningForProcessSongGroup = false;
+            }
 
             // Check and use Soul Voice if toggled
             if (toggleSoulVoiceSwitch.Checked)
@@ -844,21 +892,17 @@ namespace BardSongHelper_WF
             } // End of loop for selectedSongs (Song 1, Song 2)
         }
 
-        private void textBoxSongDelay_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
-            {
-                e.Handled = true; // Block non-numeric input
-            }
-        }
-
         private int GetSongDelaySeconds()
         {
-            if (int.TryParse(textBoxSongDelay.Text, out int delay) && delay > 0)
+            if (comboBoxSongDelay.SelectedItem != null && int.TryParse(comboBoxSongDelay.SelectedItem.ToString(), out int delay))
             {
-                return delay;
+                // Optional: Add validation for range 5-11 if necessary, though items are controlled
+                if (delay >= 5 && delay <= 11)
+                {
+                    return delay;
+                }
             }
-            return 10; // Default to 10 seconds if input is invalid, empty, zero, or negative
+            return 10; // Default to 10 seconds if parsing fails or value is somehow out of expected range
         }
 
         // Populates all song selection ComboBoxes with names from the Songs list
@@ -878,10 +922,48 @@ namespace BardSongHelper_WF
 
             if (songNames.Length > 0)
             {
-                SongGroup1_Song1_ComboBox.SelectedIndex = 0;
-                SongGroup1_Song2_ComboBox.SelectedIndex = Math.Min(1, songNames.Length - 1);
-                SongGroup2_Song1_ComboBox.SelectedIndex = 0;
-                SongGroup2_Song2_ComboBox.SelectedIndex = Math.Min(1, songNames.Length - 1);
+                int advancingMarchIndex = Songs.FindIndex(s => s.SongName == "Advancing March");
+                int victoryMarchIndex = Songs.FindIndex(s => s.SongName == "Victory March");
+
+                if (advancingMarchIndex != -1)
+                {
+                    SongGroup1_Song1_ComboBox.SelectedIndex = advancingMarchIndex;
+                }
+                else
+                {
+                    SongGroup1_Song1_ComboBox.SelectedIndex = 0; // Default if not found
+                }
+
+                if (victoryMarchIndex != -1)
+                {
+                    SongGroup1_Song2_ComboBox.SelectedIndex = victoryMarchIndex;
+                }
+                else
+                {
+                    // Default to second song or first if only one/zero songs and Advancing March wasn't found
+                    SongGroup1_Song2_ComboBox.SelectedIndex = Math.Min(1, songNames.Length - 1);
+                }
+
+                int magesBalladIIIndex = Songs.FindIndex(s => s.SongName == "Mage's Ballad II");
+                int magesBalladIndex = Songs.FindIndex(s => s.SongName == "Mage's Ballad");
+
+                if (magesBalladIIIndex != -1)
+                {
+                    SongGroup2_Song1_ComboBox.SelectedIndex = magesBalladIIIndex;
+                }
+                else
+                {
+                    SongGroup2_Song1_ComboBox.SelectedIndex = 0; // Default if not found
+                }
+
+                if (magesBalladIndex != -1)
+                {
+                    SongGroup2_Song2_ComboBox.SelectedIndex = magesBalladIndex;
+                }
+                else
+                {
+                    SongGroup2_Song2_ComboBox.SelectedIndex = Math.Min(1, songNames.Length - 1);
+                }
             }
         }
 
@@ -1173,6 +1255,15 @@ namespace BardSongHelper_WF
 
         private async Task ExecuteBardRotation(CancellationToken cancellationToken)
         {
+            if (!IsPlayerInParty())
+            {
+                // Show a message to the user.
+                MetroMessageBox.Show(this, "Bard Rotation: You must be in a party with at least one other active member to start the rotation.", "Party Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // Throwing OperationCanceledException will be caught by the calling method's finally block
+                // to reset the toggle switch and rotation state.
+                throw new OperationCanceledException("Party required to start rotation.");
+            }
+
             // Helper function to send command and delay
             async Task SendCommand(string command, int delayMs = 1000)
             {
@@ -1192,22 +1283,16 @@ namespace BardSongHelper_WF
                     await Task.Delay(3000, cancellationToken);
                 }
 
-                // Check party status. Auto-join should be active via Song_Timer_TickAsync.
-                await Task.Delay(2000, cancellationToken); // Wait 2s for potential auto-join to occur
-
-                if (_api.Party.GetPartyMembers() == null || _api.Party.GetPartyMembers().Count <= 1)
+                if (!IsPlayerInParty())
                 {
-                    // If still not in party, try a direct /join
-                    await SendCommand("/join", 1500);
-                    await Task.Delay(2000, cancellationToken); // Wait for join to process
-
-                    if (_api.Party.GetPartyMembers() == null || _api.Party.GetPartyMembers().Count <= 1)
-                    {
-                        MetroMessageBox.Show(this, $"Bard Rotation (Group {groupNum}): Failed to join a party. Aborting group.", "Party Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
+                    MetroMessageBox.Show(this, $"Bard Rotation (Group {groupNum}): Not in a valid party with other active members. Aborting this group's songs.", "Party Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return; // Abort songs for this group
                 }
-
+                // It's good practice to refresh party details if the check passes,
+                // though IsPlayerInParty already fetches them.
+                // If GrabParty() updates UI elements specifically needed before song casting, keep it.
+                // Otherwise, it might be redundant if IsPlayerInParty() is comprehensive enough.
+                // For now, let's assume GrabParty() is still useful here if the party check passes.
                 GrabParty();
 
                 foreach (var song in songsToPlay)

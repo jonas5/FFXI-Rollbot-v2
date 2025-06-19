@@ -428,7 +428,7 @@ namespace BardSongHelper_WF
             // groupBox8
             //
             this.labelSongDelay = new MetroFramework.Controls.MetroLabel();
-            this.textBoxSongDelay = new MetroFramework.Controls.MetroTextBox();
+            // this.textBoxSongDelay = new MetroFramework.Controls.MetroTextBox(); // Removed local variable declaration
 
             this.groupBox8.Controls.Add(this.labelSongDelay);
             this.labelBardRotationSwitch = new MetroFramework.Controls.MetroLabel();
@@ -445,7 +445,8 @@ namespace BardSongHelper_WF
             this.groupBox8.Controls.Add(this.labelBardRotationSwitch);
             this.groupBox8.Controls.Add(this.toggleBardRotationSwitch);
             this.groupBox8.Controls.Add(this.labelSongDelay);
-            this.groupBox8.Controls.Add(this.textBoxSongDelay);
+            // this.groupBox8.Controls.Add(this.textBoxSongDelay); // Removed
+            this.groupBox8.Controls.Add(this.comboBoxSongDelay); // Added
             this.groupBox8.Controls.Add(this.metroLabel5);
             this.groupBox8.Controls.Add(this.PauseOnZone_Switch);
             this.groupBox8.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -485,34 +486,21 @@ namespace BardSongHelper_WF
             this.labelSongDelay.TabIndex = 2; // Next TabIndex
             this.labelSongDelay.Text = "Song Delay (s):";
             //
-            // textBoxSongDelay
+            // comboBoxSongDelay
             //
-            this.textBoxSongDelay.CustomButton.Image = null;
-            this.textBoxSongDelay.CustomButton.Location = new System.Drawing.Point(28, 1);
-            this.textBoxSongDelay.CustomButton.Name = "";
-            this.textBoxSongDelay.CustomButton.Size = new System.Drawing.Size(21, 21);
-            this.textBoxSongDelay.CustomButton.Style = MetroFramework.MetroColorStyle.Blue;
-            this.textBoxSongDelay.CustomButton.TabIndex = 1;
-            this.textBoxSongDelay.CustomButton.Theme = MetroFramework.MetroThemeStyle.Light;
-            this.textBoxSongDelay.CustomButton.UseSelectable = true;
-            this.textBoxSongDelay.CustomButton.Visible = false;
-            this.textBoxSongDelay.Lines = new string[] { "10" }; // MODIFIED
-            this.textBoxSongDelay.Location = new System.Drawing.Point(122, 40); // Next to labelSongDelay
-            this.textBoxSongDelay.MaxLength = 3;
-            this.textBoxSongDelay.Name = "textBoxSongDelay";
-            this.textBoxSongDelay.PasswordChar = '\0';
-            this.textBoxSongDelay.ScrollBars = System.Windows.Forms.ScrollBars.None;
-            this.textBoxSongDelay.SelectedText = "";
-            this.textBoxSongDelay.SelectionLength = 0;
-            this.textBoxSongDelay.SelectionStart = 0;
-            this.textBoxSongDelay.ShortcutsEnabled = true;
-            this.textBoxSongDelay.Size = new System.Drawing.Size(50, 23);
-            this.textBoxSongDelay.TabIndex = 3; // Original TabIndex for this row
-            this.textBoxSongDelay.Text = "10"; // MODIFIED
-            this.textBoxSongDelay.UseSelectable = true;
-            this.textBoxSongDelay.WaterMarkColor = System.Drawing.Color.FromArgb(((int)(((byte)(109)))), ((int)(((byte)(109)))), ((int)(((byte)(109)))));
-            this.textBoxSongDelay.WaterMarkFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Pixel);
-            this.textBoxSongDelay.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBoxSongDelay_KeyPress);
+            this.comboBoxSongDelay = new System.Windows.Forms.ComboBox();
+            this.comboBoxSongDelay.FormattingEnabled = true;
+            for (int i = 5; i <= 11; i++)
+            {
+                this.comboBoxSongDelay.Items.Add(i.ToString());
+            }
+            this.comboBoxSongDelay.Location = new System.Drawing.Point(122, 40); // Same as textBoxSongDelay
+            this.comboBoxSongDelay.Name = "comboBoxSongDelay";
+            this.comboBoxSongDelay.Size = new System.Drawing.Size(50, 21); // Same as textBoxSongDelay, height 21 for ComboBox
+            this.comboBoxSongDelay.TabIndex = 3; // Same as textBoxSongDelay
+            this.comboBoxSongDelay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxSongDelay.SelectedItem = "10";
+            // this.toolTip1.SetToolTip(this.comboBoxSongDelay, "Sets the delay in seconds after playing a song during automated cycles."); // Assuming toolTip1 exists and is configured
             //
             // labelBardRotationSwitch
             //
@@ -697,7 +685,8 @@ namespace BardSongHelper_WF
         private MetroFramework.Controls.MetroButton buttonToggleManualFollow;
         private MetroFramework.Controls.MetroToggle toggleGroup2Switch;
         private MetroFramework.Controls.MetroLabel labelSongDelay;
-        private MetroFramework.Controls.MetroTextBox textBoxSongDelay;
+        // private MetroFramework.Controls.MetroTextBox textBoxSongDelay; // Removed
+        private System.Windows.Forms.ComboBox comboBoxSongDelay; // Added
         private MetroFramework.Controls.MetroToggle toggleSoulVoiceSwitch;
         private MetroFramework.Controls.MetroLabel labelSoulVoice;
         private MetroFramework.Controls.MetroLabel labelBardRotationSwitch;
