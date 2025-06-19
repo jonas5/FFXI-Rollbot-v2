@@ -128,6 +128,14 @@ namespace BardSongHelper_WF
         public Form1()
         {
             InitializeComponent();
+
+            // Populate comboBoxSongDelay
+            for (int i = 5; i <= 11; i++)
+            {
+                this.comboBoxSongDelay.Items.Add(i.ToString());
+            }
+            this.comboBoxSongDelay.SelectedItem = "10";
+
             this.ShadowType = MetroFramework.Forms.MetroFormShadowType.None; 
 
             // Removed: RollOne_ComboBox.SelectedIndex = 3;
