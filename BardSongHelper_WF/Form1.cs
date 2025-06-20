@@ -129,6 +129,10 @@ namespace BardSongHelper_WF
         {
             InitializeComponent();
 
+#if DEBUG
+            DEBUG.Visible = true;
+#endif
+
             // Populate comboBoxSongDelay
             for (int i = 5; i <= 11; i++)
             {
@@ -1297,11 +1301,33 @@ namespace BardSongHelper_WF
                     await Task.Delay(3000, cancellationToken);
                 }
 
-                if (!IsPlayerInParty())
+                bool partyCheckSuccessful = false;
+                for (int i = 1; i <= 3; i++)
                 {
-                    MetroMessageBox.Show(this, $"Bard Rotation (Group {groupNum}): Not in a valid party with other active members. Aborting this group's songs.", "Party Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
+
+                    if (IsPlayerInParty())
+                    {
+                        Console.WriteLine($"Party check successful on attempt {i} for Group {groupNum}.");
+                        partyCheckSuccessful = true;
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Party check failed on attempt {i} for Group {groupNum}. Retrying in {GetSongDelaySeconds()} seconds...");
+                        if (i < 3) // Don't wait after the last attempt
+                        {
+                            await Task.Delay(GetSongDelaySeconds() * 1000, cancellationToken);
+                        }
+                    }
+                }
+
+                if (!partyCheckSuccessful)
+                {
+                    MetroMessageBox.Show(this, $"Bard Rotation (Group {groupNum}): Not in a valid party with other active members after 3 attempts. Aborting this group's songs.", "Party Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return; // Abort songs for this group
                 }
+
                 // It's good practice to refresh party details if the check passes, 
                 // though IsPlayerInParty already fetches them. 
                 // If GrabParty() updates UI elements specifically needed before song casting, keep it.
