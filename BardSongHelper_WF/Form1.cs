@@ -184,6 +184,19 @@ namespace BardSongHelper_WF
 
             PopulateSongComboBoxes(); // Added call
 
+            // Populate custom call ComboBoxes
+            List<string> customCalls = new List<string>();
+            for (int i = 1; i <= 29; i++)
+            {
+                customCalls.Add($"Call {i}"); // Placeholder calls
+            }
+
+            comboBoxLeavePartyCall.DataSource = new List<string>(customCalls); // Use a new list instance
+            comboBoxLeavePartyCall.SelectedIndex = -1; // No default selection
+
+            comboBoxRotationStartCall.DataSource = new List<string>(customCalls); // Use a new list instance
+            comboBoxRotationStartCall.SelectedIndex = -1; // No default selection
+
             #region "Check for the Elite API and POL instances"
 
             if (File.Exists("eliteapi.dll") && File.Exists("elitemmo.api.dll"))
@@ -1231,6 +1244,29 @@ namespace BardSongHelper_WF
                     toggleAutoJoinSwitch.Checked = true;
                 }
 
+                    // Send custom rotation start call
+                    if (comboBoxRotationStartCall.SelectedItem != null && !string.IsNullOrWhiteSpace(comboBoxRotationStartCall.SelectedItem.ToString()))
+                    {
+                        // We need to ensure _api is not null and player is logged in before sending command.
+                        // These checks are already performed above for starting the rotation.
+                        // We also need a CancellationToken. Since this is before the main CancellationTokenSource for the rotation is created,
+                        // we might not have one. Sending a command should be quick.
+                        // If SendCommand requires a token and it's problematic here, we might need to adjust SendCommand or call _api.ThirdParty.SendString directly.
+                        // For now, let's assume SendCommand can be called or we can use _api.ThirdParty.SendString.
+                        // The SendCommand helper is async, so this method part might need to be async if it isn't already.
+                        // The `toggleBardRotationSwitch_CheckedChanged` is already `async void`.
+
+                        // Let's use a temporary CancellationToken if SendCommand strictly requires it,
+                        // or adapt if SendCommand can be called without one for a brief command.
+                        // Given SendCommand is defined as: async Task SendCommand(string command, int delayMs = 1000)
+                        // which internally uses the main cancellationToken passed to ExecuteBardRotation,
+                        // we cannot use it directly here before bardRotationCancellationTokenSource is created.
+                        // So, we will use _api.ThirdParty.SendString directly.
+
+                        _api.ThirdParty.SendString($"/p {comboBoxRotationStartCall.SelectedItem.ToString()}");
+                        await Task.Delay(1000); // Brief delay to allow message to send, adjust if needed.
+                    }
+
                 isBardRotationActive = true;
                 bardRotationCancellationTokenSource = new CancellationTokenSource();
                 // ActivityButton.Enabled = false; // Optional: disable manual start/stop
@@ -1349,7 +1385,12 @@ namespace BardSongHelper_WF
                     await Task.Delay(songPlayDuration * 1000, cancellationToken);
                 }
 
-                await SendCommand($"/p Bard Rotation: Group {groupNum} songs complete. Leaving party.", 1500); // Updated announcement
+                string leaveMessage = $"/p Bard Rotation: Group {groupNum} songs complete. Leaving party.";
+                if (comboBoxLeavePartyCall.SelectedItem != null && !string.IsNullOrWhiteSpace(comboBoxLeavePartyCall.SelectedItem.ToString()))
+                {
+                    leaveMessage += " " + comboBoxLeavePartyCall.SelectedItem.ToString();
+                }
+                await SendCommand(leaveMessage, 1500);
                 await SendCommand("/pcmd leave", 2000); // Changed command
             }
 

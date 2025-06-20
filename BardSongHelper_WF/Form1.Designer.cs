@@ -29,6 +29,8 @@ namespace BardSongHelper_WF
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            this.comboBoxLeavePartyCall = new MetroFramework.Controls.MetroComboBox();
+            this.comboBoxRotationStartCall = new MetroFramework.Controls.MetroComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.Select_POLID = new System.Windows.Forms.Button();
             this.POLID = new MetroFramework.Controls.MetroComboBox();
@@ -289,10 +291,12 @@ namespace BardSongHelper_WF
             this.groupBox8.Controls.Add(this.toggleAutoJoinSwitch);
             this.groupBox8.Controls.Add(this.metroLabel5);
             this.groupBox8.Controls.Add(this.PauseOnZone_Switch);
+            this.groupBox8.Controls.Add(this.comboBoxLeavePartyCall);
+            this.groupBox8.Controls.Add(this.comboBoxRotationStartCall);
             this.groupBox8.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox8.Location = new System.Drawing.Point(11, 473);
             this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Size = new System.Drawing.Size(300, 148);
+            this.groupBox8.Size = new System.Drawing.Size(300, 228);
             this.groupBox8.TabIndex = 10;
             this.groupBox8.TabStop = false;
             this.groupBox8.Text = " PROGRAM OPTIONS ";
@@ -397,6 +401,28 @@ namespace BardSongHelper_WF
             this.PauseOnZone_Switch.UseSelectable = true;
             this.PauseOnZone_Switch.CheckedChanged += new System.EventHandler(this.PauseOnZone_Switch_CheckedChanged);
             // 
+            // comboBoxLeavePartyCall
+            //
+            this.comboBoxLeavePartyCall.FormattingEnabled = true;
+            this.comboBoxLeavePartyCall.ItemHeight = 23;
+            this.comboBoxLeavePartyCall.Location = new System.Drawing.Point(6, 140);
+            this.comboBoxLeavePartyCall.Name = "comboBoxLeavePartyCall";
+            this.comboBoxLeavePartyCall.Size = new System.Drawing.Size(282, 29);
+            this.comboBoxLeavePartyCall.TabIndex = 8;
+            this.comboBoxLeavePartyCall.UseSelectable = true;
+            this.comboBoxLeavePartyCall.PromptText = "Call on party leave...";
+            //
+            // comboBoxRotationStartCall
+            //
+            this.comboBoxRotationStartCall.FormattingEnabled = true;
+            this.comboBoxRotationStartCall.ItemHeight = 23;
+            this.comboBoxRotationStartCall.Location = new System.Drawing.Point(6, 175);
+            this.comboBoxRotationStartCall.Name = "comboBoxRotationStartCall";
+            this.comboBoxRotationStartCall.Size = new System.Drawing.Size(282, 29);
+            this.comboBoxRotationStartCall.TabIndex = 9;
+            this.comboBoxRotationStartCall.UseSelectable = true;
+            this.comboBoxRotationStartCall.PromptText = "Call on rotation start...";
+            //
             // PauseTimersChecks
             // 
             this.PauseTimersChecks.Enabled = true;
@@ -652,6 +678,8 @@ namespace BardSongHelper_WF
         private MetroFramework.Controls.MetroTextBox FollowerTarget;
         private MetroFramework.Controls.MetroLabel labelSoulVoice;
         private MetroFramework.Controls.MetroToggle toggleSoulVoiceSwitch;
+        private MetroFramework.Controls.MetroComboBox comboBoxLeavePartyCall;
+        private MetroFramework.Controls.MetroComboBox comboBoxRotationStartCall;
         // NOTE: textBoxSongDelay field is INTENTIONALLY REMOVED from this list
     }
 }
