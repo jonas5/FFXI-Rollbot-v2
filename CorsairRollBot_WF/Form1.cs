@@ -87,7 +87,8 @@ namespace CorsairRollBot_WF
 
         #region "PUBLIC METHODS"
 
-        public List<PartyRequirements> Member_List = new List<PartyRequirements>();
+        public List<PartyRequirements> Member_List_Group1 = new List<PartyRequirements>();
+        public List<PartyRequirements> Member_List_Group2 = new List<PartyRequirements>();
 
         public ListBox processids = new ListBox();
 
@@ -136,8 +137,10 @@ namespace CorsairRollBot_WF
         {
             InitializeComponent();
 
-            RollOne_ComboBox.SelectedIndex = 3;
-            RollTwo_ComboBox.SelectedIndex = 10;
+            RollOne_ComboBox_Group1.SelectedIndex = 3;
+            RollTwo_ComboBox_Group1.SelectedIndex = 10;
+            RollOne_ComboBox_Group2.SelectedIndex = 0; // Default for group 2, e.g., Corsair's Roll
+            RollTwo_ComboBox_Group2.SelectedIndex = 1; // Default for group 2, e.g., Ninja Roll
 
             #region "ADD ALL THE ROLLS TO THE CUSTOM CLASS"
 
@@ -557,187 +560,208 @@ namespace CorsairRollBot_WF
                     FollowTargetAsync();
 
                     // FIRST GRAB THE REQUIRED ROLL DATA
-                    RollData rollOne = rolls.Where(r => r.Position == RollOne_ComboBox.SelectedIndex).FirstOrDefault();
-                    RollData rollTwo = rolls.Where(r => r.Position == RollTwo_ComboBox.SelectedIndex).FirstOrDefault();
+                    // For now, we'll assume Group 1 is the primary group for decision making until group switching logic is implemented.
+                    // This section will need significant rework to handle two active groups.
+                    RollData rollOne_G1 = rolls.Where(r => r.Position == RollOne_ComboBox_Group1.SelectedIndex).FirstOrDefault();
+                    RollData rollTwo_G1 = rolls.Where(r => r.Position == RollTwo_ComboBox_Group1.SelectedIndex).FirstOrDefault();
+                    RollData rollOne_G2 = rolls.Where(r => r.Position == RollOne_ComboBox_Group2.SelectedIndex).FirstOrDefault();
+                    RollData rollTwo_G2 = rolls.Where(r => r.Position == RollTwo_ComboBox_Group2.SelectedIndex).FirstOrDefault();
 
-                    // NOW BEFORE EVEN ATTEMPTING THE ROLLS CHECK IF ANY PT MEMBERS ARE REQUIRED TO BE
-                    // NEARBY AND IF THEY ARE THAT THEY'RE CLOSE BY THEN IF THEY ARE BEGIN ROLLS
+                    // Determine active group and rolls (this is a placeholder for more complex group management)
+                    RollData currentPrimaryRoll = rollOne_G1; // Default to Group 1, Roll 1
+                    RollData currentSecondaryRoll = rollTwo_G1; // Default to Group 1, Roll 2
+                    List<PartyRequirements> currentPartyRequirements = Member_List_Group1;
 
-                    List<PartyRequirements> res = (from item in Member_List where item.Checked == true select item).ToList<PartyRequirements>();
-                    if (res.Count() >= 1)
+                    // Determine current group for party checks based on RollActive state
+                    List<PartyRequirements> activePartyGroup = Member_List_Group1; // Default to Group 1
+                    if (RollActive == 3 || RollActive == 4) // If attempting or managing G2 rolls
                     {
-                        foreach (PartyRequirements item in res)
+                        activePartyGroup = Member_List_Group2;
+                    }
+
+                    AllInRange = true; // Assume true, set to false if anyone required is out of range for the current group.
+                    List<PartyRequirements> reqMembers = (from item in activePartyGroup where item.Checked == true select item).ToList<PartyRequirements>();
+                    if (reqMembers.Count() >= 1)
+                    {
+                        foreach (PartyRequirements item in reqMembers)
                         {
-                            if (item.Checked)
+                            if (item.Checked && !DistanceChecker(item.CharacterName))
                             {
-                                if (DistanceChecker(item.CharacterName) == true)
-                                {
-                                    AllInRange = true;
-                                }
-                                else
-                                {
-                                    AllInRange = false;
-                                }
+                                AllInRange = false;
+                                break;
                             }
                         }
                     }
-                    else
-                    {
-                        AllInRange = true;
-                    }
+                    // If not all in range for the specific group whose roll is being attempted, potentially skip or wait.
+                    // For now, the logic proceeds but this AllInRange flag can be used to gate roll attempts below.
 
-                    if (AllInRange)
+                    if (AllInRange) // Only proceed if required members for the current action's group are in range
                     {
                         int lucky = 0;
                         int unlucky = 0;
+                        RollData rollBeingDoubleUpEvaluated = null;
 
-                        if (RollActive == 1)
+                        // Determine which roll is currently buffed by Phantom Roll for Double-Up
+                        if (BuffChecker(rollOne_G1.Buff_id)) rollBeingDoubleUpEvaluated = rollOne_G1;
+                        else if (BuffChecker(rollTwo_G1.Buff_id)) rollBeingDoubleUpEvaluated = rollTwo_G1;
+                        else if (BuffChecker(rollOne_G2.Buff_id)) rollBeingDoubleUpEvaluated = rollOne_G2;
+                        else if (BuffChecker(rollTwo_G2.Buff_id)) rollBeingDoubleUpEvaluated = rollTwo_G2;
+
+                        if (rollBeingDoubleUpEvaluated != null)
                         {
-                            lucky = rollOne.Lucky;
-                            unlucky = rollOne.Unlucky;
-                        }
-                        else if (RollActive == 2)
-                        {
-                            lucky = rollTwo.Lucky;
-                            unlucky = rollTwo.Unlucky;
+                            lucky = rollBeingDoubleUpEvaluated.Lucky;
+                            unlucky = rollBeingDoubleUpEvaluated.Unlucky;
                         }
 
-                        // DOUBLE-UP CHANCE IS ACTIVE DOUBLE UP, SNAKE EYE, RANDOM DEAL IF NEEDED
+
+                        // DOUBLE-UP CHANCE IS ACTIVE (Phantom Roll buff ID 308 is active)
                         if (BuffChecker(308) == true)
                         {
-
-                            if (Blocked == false)
+                            if (Blocked == false && rollBeingDoubleUpEvaluated != null) // Ensure a roll is active to double up
                             {
-
                                 if (CurrentRoll == 11 || CurrentRoll == lucky)
                                 {
-                                    // YOU ROLLED 11 OR HAVE THE LUCKY NUMBER SO DO NOTHING AND MOVE ON TO
-                                    // THE NEXT ROLL
-
-                                    // MessageBox.Show("Current roll number: " + CurrentRoll + "/" + lucky);
-
-                                    Blocked = true;
-
+                                    Blocked = true; // Lucky roll or 11, block further DU actions on this.
                                 }
-                                else
+                                else if (CurrentRoll == unlucky)
                                 {
-                                    if (CurrentRoll == unlucky)
+                                    if (SnakeEye_Switch.Checked == true && HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") == 0 && !BuffChecker(357))
                                     {
-                                        // AN UNLUCKY ROLL IS ACTIVE IF ENABLED USE SNAKE EYE IF NOT
-                                        // AVAILABLE AND RANDOM DEAL IS ENABLED TRY TO RESET SNAKE EYE TO
-                                        // ROLL A BETTER NUMBER
-
-                                        if (SnakeEye_Switch.Checked == true && HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") == 0 && BuffChecker(357) != true)
+                                        _api.ThirdParty.SendString("/ja \"Snake Eye\" <me>");
+                                    }
+                                    else if (SnakeEye_Switch.Checked == true && HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") != 0 &&
+                                             RandomDeal_Switch.Checked == true && HasAbility("Random Deal") == true && AbilityRecast("Random Deal") == 0 && !BuffChecker(357))
+                                    {
+                                        _api.ThirdParty.SendString("/ja \"Random Deal\" <me>");
+                                    }
+                                    else if (AbilityRecast("Double-Up") == 0)
+                                    {
+                                        _api.ThirdParty.SendString("/ja \"Double-Up\" <me>"); // DU unlucky roll if other options exhausted
+                                    }
+                                }
+                                else // Not 11, not lucky, not unlucky
+                                {
+                                    if (BuffChecker(357) == true && AbilityRecast("Double-Up") == 0) // Snake Eye buff is up
+                                    {
+                                        _api.ThirdParty.SendString("/ja \"Double-Up\" <me>");
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
+                                    else if (CurrentRoll == SnakeEye_Number.Value && SnakeEye_Switch.Checked == true)
+                                    {
+                                        if (HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") == 0 && !BuffChecker(357))
                                         {
                                             _api.ThirdParty.SendString("/ja \"Snake Eye\" <me>");
+                                            await Task.Delay(TimeSpan.FromSeconds(1));
                                         }
-                                        else if (SnakeEye_Switch.Checked == true && HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") != 0 &&
-                                            RandomDeal_Switch.Checked == true && HasAbility("Random Deal") == true && AbilityRecast("Random Deal") == 0 && BuffChecker(357) != true)
+                                        else if (HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") != 0 && !BuffChecker(357) &&
+                                                 RandomDeal_Switch.Checked == true && HasAbility("Random Deal") == true && AbilityRecast("Random Deal") == 0)
                                         {
                                             _api.ThirdParty.SendString("/ja \"Random Deal\" <me>");
-                                        }
-                                        else
-                                        {
-                                            // DOUBLE UP ANYWAY, AN UNLUCKY ROLL IS NOT WORTH KEEPING
-                                            if (AbilityRecast("Double-Up") == 0)
-                                            {
-                                                _api.ThirdParty.SendString("/ja \"Double-Up\" <me>");
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // SNAKE EYE IS UP SO DOUBLE-UP
-                                        if (BuffChecker(357) == true && AbilityRecast("Double-Up") == 0)
-                                        {
-                                            _api.ThirdParty.SendString("/ja \"Double-Up\" <me>");
                                             await Task.Delay(TimeSpan.FromSeconds(1));
-
-                                        }
-                                        else if (CurrentRoll == SnakeEye_Number.Value && ((SnakeEye_Switch.Checked == true && AbilityRecast("Snake Eye") == 0) || (SnakeEye_Switch.Checked == true && RandomDeal_Switch.Checked == true && AbilityRecast("Random Deal") == 0)))
-                                        {
-                                            // IF THE ROLL IS 10 THEN USE SNAKE EYE
-                                            if (SnakeEye_Switch.Checked == true && HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") == 0 && BuffChecker(357) != true)
-                                            {
-                                                // SNAKE EYE CAN BE USED SO DO SO
-                                                _api.ThirdParty.SendString("/ja \"Snake Eye\" <me>");
-                                                await Task.Delay(TimeSpan.FromSeconds(1));
-                                            }
-                                            else if (SnakeEye_Switch.Checked == true && HasAbility("Snake Eye") == true && AbilityRecast("Snake Eye") != 0 && BuffChecker(357) != true
-                                                && RandomDeal_Switch.Checked == true && HasAbility("Random Deal") == true && AbilityRecast("Random Deal") == 0)
-                                            {
-                                                // SNAKE EYE IS ON RECAST BUT RANDOM DEAL IS NOT, TRY TO
-                                                // RESET SNAKE EYE
-                                                _api.ThirdParty.SendString("/ja \"Random Deal\" <me>");
-                                                await Task.Delay(TimeSpan.FromSeconds(1));
-                                            }
-                                            else
-                                            {
-                                                // DO NOTHING AS YOU WOULD HAVE TO BE VERY LUCKY TO ROLL A
-                                                // NUMBER ONE
-                                            }
-                                        }
-                                        else if (CurrentRoll <= 6 && CurrentRoll != lucky)
-                                        {
-                                            // DOUBLE-UP ANYTHING BELOW OR AT 6
-                                            if (AbilityRecast("Double-Up") == 0)
-                                            {
-                                                _api.ThirdParty.SendString("/ja \"Double-Up\" <me>");
-                                                await Task.Delay(TimeSpan.FromSeconds(1));
-                                            }
                                         }
                                     }
-
+                                    else if (CurrentRoll <= 6 && CurrentRoll != lucky && AbilityRecast("Double-Up") == 0)
+                                    {
+                                        _api.ThirdParty.SendString("/ja \"Double-Up\" <me>");
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
                                 }
                             }
                         }
-                        else
+                        else // PHANTOM ROLL IS NOT ACTIVE (Buff 308 is false), so proceed with casting next roll in sequence.
                         {
-                            // UNBLOCK DOUBLE UP FOR FUTURE ROLL USAGE
-                            Blocked = false;
+                            Blocked = false; // Reset Blocked if Phantom Roll isn't active.
 
-                            // CHECK IF YOU HAVE A BUST STATUS TO REMOVE
-                            if (BuffChecker(309) == true && HasAbility("Fold") == true && AbilityRecast("Fold") == 0)
+                            if (BuffChecker(309) == true && HasAbility("Fold") == true && AbilityRecast("Fold") == 0) // Bust
                             {
                                 _api.ThirdParty.SendString("/ja \"Fold\" <me>");
                                 await Task.Delay(TimeSpan.FromSeconds(1));
+                                RollActive = 0; // Reset sequence after Fold
+                                // Reset LastKnownRoll as well, because Fold clears Phantom Roll state.
+                                LastKnownRoll = 0;
+                                CurrentRoll = 0; // And current roll number
+                                if (CurrentRoll_Number.InvokeRequired) { CurrentRoll_Number.Invoke(new MethodInvoker(delegate () { CurrentRoll_Number.Text = "0"; })); } else { CurrentRoll_Number.Text = "0"; }
                             }
-
-                            // NOW CHECK IF THE FIRST ROLL IS ACTIVE
-                            if (BuffChecker(rollOne.Buff_id) != true && HasAbility("Phantom Roll") == true && AbilityRecast("Phantom Roll") == 0)
+                            else if (HasAbility("Phantom Roll") == true && AbilityRecast("Phantom Roll") == 0 && BuffChecker(309) == false) // Can cast Phantom Roll and not Busted
                             {
-                                // NOW CHECK IF CROOKED ROLL IS ENABLED AND IF SO USE IT
-                                if (CrookedCards_Switch.Checked == true && HasAbility("Crooked Cards") == true && AbilityRecast("Crooked Cards") == 0)
+                                bool castedRoll = false;
+                                // Try G1R1
+                                if (!BuffChecker(rollOne_G1.Buff_id))
                                 {
-                                    _api.ThirdParty.SendString("/ja \"Crooked Cards\" <me>");
-                                    await Task.Delay(TimeSpan.FromSeconds(1));
+                                    List<PartyRequirements> req_g1r1 = (from item in Member_List_Group1 where item.Checked == true select item).ToList<PartyRequirements>();
+                                    bool g1r1_AllInRange = req_g1r1.Count == 0 || req_g1r1.All(pr => DistanceChecker(pr.CharacterName));
+                                    if (g1r1_AllInRange)
+                                    {
+                                        if (CrookedCards_Switch.Checked == true && HasAbility("Crooked Cards") == true && AbilityRecast("Crooked Cards") == 0)
+                                        {
+                                           _api.ThirdParty.SendString("/ja \"Crooked Cards\" <me>");
+                                           await Task.Delay(TimeSpan.FromSeconds(1));
+                                        }
+                                        _api.ThirdParty.SendString("/ja \"" + rollOne_G1.Roll_name + "\" <me>");
+                                        RollActive = 1; CurrentRoll = 0; LastKnownRoll = 0; castedRoll = true;
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
                                 }
-                                // OTHERWISE USE THE ROLL
-                                else
+                                // Try G1R2
+                                else if (BuffChecker(rollOne_G1.Buff_id) && !BuffChecker(rollTwo_G1.Buff_id) && !castedRoll)
                                 {
-                                    RollActive = 1;
-                                    CurrentRoll = 0;
-                                    _api.ThirdParty.SendString("/ja \"" + rollOne.Roll_name + "\" <me>");
-                                    await Task.Delay(TimeSpan.FromSeconds(1));
-
+                                    List<PartyRequirements> req_g1r2 = (from item in Member_List_Group1 where item.Checked == true select item).ToList<PartyRequirements>();
+                                    bool g1r2_AllInRange = req_g1r2.Count == 0 || req_g1r2.All(pr => DistanceChecker(pr.CharacterName));
+                                    if (g1r2_AllInRange)
+                                    {
+                                        _api.ThirdParty.SendString("/ja \"" + rollTwo_G1.Roll_name + "\" <me>");
+                                        RollActive = 2; CurrentRoll = 0; LastKnownRoll = 0; castedRoll = true;
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
                                 }
-                            }
+                                // Try G2R1
+                                else if (BuffChecker(rollOne_G1.Buff_id) && BuffChecker(rollTwo_G1.Buff_id) &&
+                                         !BuffChecker(rollOne_G2.Buff_id) && !castedRoll)
+                                {
+                                    List<PartyRequirements> req_g2r1 = (from item in Member_List_Group2 where item.Checked == true select item).ToList<PartyRequirements>();
+                                    bool g2r1_AllInRange = req_g2r1.Count == 0 || req_g2r1.All(pr => DistanceChecker(pr.CharacterName));
+                                    if (g2r1_AllInRange)
+                                    {
+                                        _api.ThirdParty.SendString("/ja \"" + rollOne_G2.Roll_name + "\" <me>");
+                                        RollActive = 3; CurrentRoll = 0; LastKnownRoll = 0; castedRoll = true;
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
+                                }
+                                // Try G2R2
+                                else if (BuffChecker(rollOne_G1.Buff_id) && BuffChecker(rollTwo_G1.Buff_id) &&
+                                         BuffChecker(rollOne_G2.Buff_id) && !BuffChecker(rollTwo_G2.Buff_id) && !castedRoll)
+                                {
+                                    List<PartyRequirements> req_g2r2 = (from item in Member_List_Group2 where item.Checked == true select item).ToList<PartyRequirements>();
+                                    bool g2r2_AllInRange = req_g2r2.Count == 0 || req_g2r2.All(pr => DistanceChecker(pr.CharacterName));
+                                    if (g2r2_AllInRange)
+                                    {
+                                        _api.ThirdParty.SendString("/ja \"" + rollTwo_G2.Roll_name + "\" <me>");
+                                        RollActive = 4; CurrentRoll = 0; LastKnownRoll = 0; castedRoll = true;
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
+                                }
 
-                            // FIRST ROLL CHECK HAS PASSED, NOW CHECK THE SECOND ROLL
-                            else if (BuffChecker(rollOne.Buff_id) == true && BuffChecker(rollTwo.Buff_id) != true && BuffChecker(309) == false && HasAbility("Phantom Roll") == true && AbilityRecast("Phantom Roll") == 0)
-                            {
-                                RollActive = 2;
-                                CurrentRoll = 0;
-                                _api.ThirdParty.SendString("/ja \"" + rollTwo.Roll_name + "\" <me>");
-                                await Task.Delay(TimeSpan.FromSeconds(1));
-
+                                if (castedRoll) { LastKnownRoll = 0; } // Reset LastKnownRoll if a new Phantom Roll was cast.
                             }
-                            else if (BuffChecker(rollOne.Buff_id) == true && BuffChecker(rollTwo.Buff_id) == true)
+                            // All four rolls are active
+                            if (BuffChecker(rollOne_G1.Buff_id) && BuffChecker(rollTwo_G1.Buff_id) &&
+                                BuffChecker(rollOne_G2.Buff_id) && BuffChecker(rollTwo_G2.Buff_id))
                             {
-                                RollActive = 0;
+                                RollActive = 5; // All rolls complete, move to auto-follow state.
                             }
                         }
-                    }
+
+                        // Auto-Follow Logic
+                        if (RollActive == 5 && !knownCities.Contains(_api.Player.ZoneId) && FollowerTarget.Text != string.Empty && FollowerTarget.Text != "Follower target name.")
+                        {
+                            FollowTargetAsync(); // Don't await this, let it run in background
+                            RollActive = 0; // Reset roll sequence, ready for buffs to wear or Fold.
+                        }
+                        else if (RollActive == 5) // All rolls up, but no follow condition met
+                        {
+                           RollActive = 0; // Reset, wait for buffs to wear or Fold.
+                        }
+                    } // End if(AllInRange)
                 }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(1000));
@@ -1026,19 +1050,26 @@ namespace CorsairRollBot_WF
             {
                 List<EliteAPI.PartyMember> PartyMembers = _api.Party.GetPartyMembers();
 
-                PartyMembersRequired.Items.Clear();
+                PartyMembersRequired_Group1.Items.Clear();
+                PartyMembersRequired_Group2.Items.Clear();
+
 
                 if (PartyMembers.Count() > 1)
                 {
                     foreach (EliteAPI.PartyMember PT_Data in PartyMembers)
                     {
-                        if (PT_Data.Name != _api.Player.Name && !PartyMembersRequired.Items.Contains(PT_Data.Name) && PT_Data.Name != "" && PT_Data.Active >= 1)
+                        if (PT_Data.Name != _api.Player.Name && PT_Data.Name != "" && PT_Data.Active >= 1)
                         {
-                            PartyMembersRequired.Items.Add(PT_Data.Name);
+                            if (!PartyMembersRequired_Group1.Items.Contains(PT_Data.Name))
+                            {
+                                PartyMembersRequired_Group1.Items.Add(PT_Data.Name);
+                            }
+                            if (!PartyMembersRequired_Group2.Items.Contains(PT_Data.Name))
+                            {
+                                PartyMembersRequired_Group2.Items.Add(PT_Data.Name);
+                            }
                         }
                     }
-
-
                 }
             }
         }
@@ -1083,37 +1114,67 @@ namespace CorsairRollBot_WF
 
         private void DEBUG_Click(object sender, EventArgs e)
         {
-            string Debug_MSG = string.Empty;
-
-            if (Member_List != null && Member_List.Count() > 0)
+            string Debug_MSG_G1 = "Group 1:\n";
+            if (Member_List_Group1 != null && Member_List_Group1.Count() > 0)
             {
-                foreach (PartyRequirements CharacterD in Member_List)
+                foreach (PartyRequirements CharacterD in Member_List_Group1)
                 {
-                    Debug_MSG = Debug_MSG + " " + CharacterD.CharacterName + "\n";
+                    Debug_MSG_G1 = Debug_MSG_G1 + " " + CharacterD.CharacterName + "\n";
                 }
             }
+            else
+            {
+                Debug_MSG_G1 += " No members selected for Group 1.\n";
+            }
 
-            MessageBox.Show(Debug_MSG);
+            string Debug_MSG_G2 = "Group 2:\n";
+            if (Member_List_Group2 != null && Member_List_Group2.Count() > 0)
+            {
+                foreach (PartyRequirements CharacterD in Member_List_Group2)
+                {
+                    Debug_MSG_G2 = Debug_MSG_G2 + " " + CharacterD.CharacterName + "\n";
+                }
+            }
+            else
+            {
+                Debug_MSG_G2 += " No members selected for Group 2.\n";
+            }
+
+            MessageBox.Show(Debug_MSG_G1 + "\n" + Debug_MSG_G2);
 
         }
 
-        private void PartyMembersRequired_SelectedValueChanged(object sender, EventArgs e)
+        private void PartyMembersRequired_Group1_SelectedValueChanged(object sender, EventArgs e)
         {
-            Member_List.Clear();
-
-            int count = PartyMembersRequired.Items.Count;
-
-            foreach (object selecteditem in PartyMembersRequired.SelectedItems)
+            Member_List_Group1.Clear();
+            foreach (object selecteditem in PartyMembersRequired_Group1.SelectedItems)
             {
                 string strItem = selecteditem as string;
-                Member_List.Add(new PartyRequirements { Checked = true, CharacterName = strItem });
+                Member_List_Group1.Add(new PartyRequirements { Checked = true, CharacterName = strItem });
             }
         }
 
-        private void ReloadParty_Click(object sender, EventArgs e)
+        private void PartyMembersRequired_Group2_SelectedValueChanged(object sender, EventArgs e)
+        {
+            Member_List_Group2.Clear();
+            foreach (object selecteditem in PartyMembersRequired_Group2.SelectedItems)
+            {
+                string strItem = selecteditem as string;
+                Member_List_Group2.Add(new PartyRequirements { Checked = true, CharacterName = strItem });
+            }
+        }
+
+
+        private void ReloadParty_Group1_Click(object sender, EventArgs e)
         {
             GrabParty();
         }
+
+        private void ReloadParty_Group2_Click(object sender, EventArgs e)
+        {
+            GrabParty();
+        }
+
 
         private void label1_Click_1(object sender, EventArgs e)
         {
